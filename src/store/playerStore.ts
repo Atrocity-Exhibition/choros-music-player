@@ -9,6 +9,7 @@ export interface Song {
   album: string;
   genre: string;
   track: number | null;
+  disk: number | null;
   duration: number;
 }
 

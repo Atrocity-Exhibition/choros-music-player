@@ -19,6 +19,7 @@ struct SongMetadata {
     album: String,
     genre: String,
     track: Option<u32>,
+    disk: Option<u32>,
     duration: f64,
 }
 
@@ -61,6 +62,7 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                     let mut album = "Unknown Album".to_string();
                     let mut genre = "Unknown Genre".to_string();
                     let mut track = None;
+                    let mut disk = None;
                     let mut duration = 0.0;
 
                     // Parse metadata with lofty
@@ -93,6 +95,7 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                                 }
                             }
                             track = tag.track();
+                            disk = tag.disk();
                         }
                     }
 
@@ -103,6 +106,7 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                         album,
                         genre,
                         track,
+                        disk,
                         duration,
                     });
                 }
@@ -298,6 +302,73 @@ fn start_media_server() -> u16 {
                     if parts.len() < 2 || parts[0] != "GET" { return; }
                     
                     let url_path = parts[1];
+                    if url_path.starts_with("/cover") {
+                        if let Some(query_idx) = url_path.find("?path=") {
+                            let encoded_path = &url_path[query_idx + 6..];
+                            let decoded = url_decode(encoded_path);
+                            let file_path = Path::new(&decoded);
+                            
+                            if file_path.exists() && file_path.is_file() {
+                                // 1. Try to get embedded cover art
+                                if let Ok(tagged_file) = Probe::open(file_path)
+                                    .map_err(|e| e.to_string())
+                                    .and_then(|p| p.guess_file_type().map_err(|e| e.to_string()))
+                                    .and_then(|p| p.read().map_err(|e| e.to_string())) {
+                                    if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
+                                        if let Some(picture) = tag.pictures().first() {
+                                            let mime_type = picture.mime_type()
+                                                .map(|m| m.to_string())
+                                                .unwrap_or_else(|| "image/jpeg".to_string());
+                                            let data = picture.data();
+                                            let response = format!(
+                                                "HTTP/1.1 200 OK\r\n\
+                                                 Content-Type: {}\r\n\
+                                                 Content-Length: {}\r\n\
+                                                 Access-Control-Allow-Origin: *\r\n\r\n",
+                                                mime_type, data.len()
+                                            );
+                                            if stream.write_all(response.as_bytes()).is_ok() {
+                                                let _ = stream.write_all(data);
+                                            }
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                // 2. Fallback: check directory files in the same directory
+                                if let Some(parent) = file_path.parent() {
+                                    let cover_filenames = ["cover.jpg", "cover.png", "folder.jpg", "folder.png", "album.jpg", "album.png"];
+                                    for filename in cover_filenames.iter() {
+                                        let cover_path = parent.join(filename);
+                                        if cover_path.exists() && cover_path.is_file() {
+                                            if let Ok(data) = std::fs::read(&cover_path) {
+                                                let mime_type = if filename.ends_with(".png") { "image/png" } else { "image/jpeg" };
+                                                let response = format!(
+                                                    "HTTP/1.1 200 OK\r\n\
+                                                     Content-Type: {}\r\n\
+                                                     Content-Length: {}\r\n\
+                                                     Access-Control-Allow-Origin: *\r\n\r\n",
+                                                    mime_type, data.len()
+                                                );
+                                                if stream.write_all(response.as_bytes()).is_ok() {
+                                                    let _ = stream.write_all(&data);
+                                                }
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Default 404 response
+                        let response = "HTTP/1.1 404 Not Found\r\n\
+                                        Content-Length: 0\r\n\
+                                        Access-Control-Allow-Origin: *\r\n\r\n";
+                        let _ = stream.write_all(response.as_bytes());
+                        return;
+                    }
+
                     if let Some(query_idx) = url_path.find("?path=") {
                         let encoded_path = &url_path[query_idx + 6..];
                         let decoded = url_decode(encoded_path);

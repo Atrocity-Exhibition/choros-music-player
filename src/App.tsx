@@ -30,6 +30,83 @@ import { usePlayerStore } from "./store/playerStore";
 import type { Song } from "./store/playerStore";
 import audio from "./lib/audio";
 
+
+function LazyCover({ 
+  songPath, 
+  className = "", 
+  isRound = false,
+  fallbackIcon: FallbackIcon
+}: { 
+  songPath: string; 
+  className?: string; 
+  isRound?: boolean;
+  fallbackIcon: React.ComponentType<{ className?: string }>;
+}) {
+  const streamPort = usePlayerStore(state => state.streamPort);
+  const [hasError, setHasError] = useState(false);
+  const [inView, setInView] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [songPath]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "150px" }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [songPath]);
+
+  if (!inView) {
+    return (
+      <div ref={ref} className={`w-full h-full bg-zinc-900/40 flex items-center justify-center ${isRound ? "rounded-full" : "rounded-xl"}`}>
+        <RefreshCw className="w-4 h-4 text-zinc-700 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (streamPort === null) {
+    return (
+      <div className={`w-full h-full bg-zinc-900/40 flex items-center justify-center ${isRound ? "rounded-full" : "rounded-xl"}`}>
+        <RefreshCw className="w-4 h-4 text-zinc-650 animate-spin" />
+      </div>
+    );
+  }
+
+  if (hasError || !songPath) {
+    return (
+      <div className={`w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center ${isRound ? "rounded-full" : "rounded-xl"}`}>
+        <FallbackIcon className={`text-zinc-500 ${isRound ? "w-7 h-7" : "w-10 h-10"}`} />
+      </div>
+    );
+  }
+
+  const coverUrl = `http://127.0.0.1:${streamPort}/cover?path=${encodeURIComponent(songPath)}`;
+
+  return (
+    <img
+      src={coverUrl}
+      alt="Cover Art"
+      onError={() => setHasError(true)}
+      className={`w-full h-full object-cover transition-opacity duration-300 opacity-100 ${className} ${isRound ? "rounded-full" : "rounded-xl"}`}
+    />
+  );
+}
+
 function App() {
   const {
     library,
@@ -609,147 +686,159 @@ function App() {
               )}
 
               {/* Artists Tab */}
-              {activeTab === "artists" && (
-                <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-in fade-in duration-150">
-                  {!selectedArtist ? (
-                    <>
-                      <div>
-                        <h2 className="text-3xl font-extrabold text-white tracking-tight">Artists</h2>
-                        <p className="text-xs text-zinc-400 mt-1 font-medium">
-                          Showing {Object.keys(library.reduce((acc, song) => {
-                            const artist = song.artist || "Unknown Artist";
-                            if (!acc[artist]) acc[artist] = [];
-                            acc[artist].push(song);
-                            return acc;
-                          }, {} as Record<string, Song[]>)).length} artists in your library
-                        </p>
-                      </div>
-                      
-                      <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {Object.keys(library.reduce((acc, song) => {
-                          const artist = song.artist || "Unknown Artist";
-                          if (!acc[artist]) acc[artist] = [];
-                          acc[artist].push(song);
-                          return acc;
-                        }, {} as Record<string, Song[]>)).sort().map((artist) => {
-                          const songs = library.filter(s => (s.artist || "Unknown Artist") === artist);
-                          return (
-                            <div
-                              key={artist}
-                              onClick={() => setSelectedArtist(artist)}
-                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col items-center text-center group"
-                            >
-                              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-105 transition duration-300 relative">
-                                <User className="w-9 h-9 text-zinc-300" />
-                                <div className="absolute inset-0 rounded-full bg-zinc-100/5 blur-md opacity-0 group-hover:opacity-100 transition duration-300"></div>
+              {activeTab === "artists" && (() => {
+                const artistsGroup = library.reduce((acc, song) => {
+                  const rawArtist = song.artist || "Unknown Artist";
+                  const artists = rawArtist.split(",").map(a => a.trim()).filter(Boolean);
+                  const uniqueArtists = Array.from(new Set(artists));
+                  if (uniqueArtists.length === 0) {
+                    uniqueArtists.push("Unknown Artist");
+                  }
+                  uniqueArtists.forEach(artist => {
+                    if (!acc[artist]) acc[artist] = [];
+                    acc[artist].push(song);
+                  });
+                  return acc;
+                }, {} as Record<string, Song[]>);
+                const sortedArtists = Object.keys(artistsGroup).sort();
+
+                return (
+                  <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-in fade-in duration-150">
+                    {!selectedArtist ? (
+                      <>
+                        <div>
+                          <h2 className="text-3xl font-extrabold text-white tracking-tight">Artists</h2>
+                          <p className="text-xs text-zinc-400 mt-1 font-medium">
+                            Showing {sortedArtists.length} artists in your library
+                          </p>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {sortedArtists.map((artist) => {
+                            const songs = artistsGroup[artist];
+                            return (
+                              <div
+                                key={artist}
+                                onClick={() => setSelectedArtist(artist)}
+                                className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col items-center text-center group"
+                              >
+                                <div className="w-20 h-20 rounded-full mb-4 border border-zinc-800 group-hover:scale-105 transition duration-300 relative overflow-hidden shadow-md">
+                                  <LazyCover songPath={songs[0]?.path || ""} fallbackIcon={User} isRound={true} />
+                                </div>
+                                <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-zinc-300 transition" title={artist}>
+                                  {artist}
+                                </h3>
+                                <p className="text-xs text-zinc-500 font-medium mt-1">
+                                  {songs.length} {songs.length === 1 ? "track" : "tracks"}
+                                </p>
                               </div>
-                              <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-zinc-300 transition">
-                                {artist}
-                              </h3>
-                              <p className="text-xs text-zinc-500 font-medium mt-1">
-                                {songs.length} {songs.length === 1 ? "track" : "tracks"}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  ) : (
-                    // Artist Detail View
-                    <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-in slide-in-from-left-4 duration-200">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setSelectedArtist(null)}
-                          className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition cursor-pointer"
-                        >
-                          &larr; Back to Artists
-                        </button>
-                        <h2 className="text-2xl font-bold text-white truncate max-w-md">
-                          {selectedArtist}
-                        </h2>
-                      </div>
-                      
-                      {/* Songs list by this artist */}
-                      <div className="flex-1 overflow-y-auto pr-1 border border-zinc-900/60 rounded-2xl bg-zinc-900/10 backdrop-blur-sm">
-                        <table className="w-full text-left border-collapse">
-                          <thead>
-                            <tr className="border-b border-zinc-900 text-[11px] font-bold text-zinc-500 tracking-wider uppercase">
-                              <th className="py-3.5 px-4 w-12 text-center">#</th>
-                              <th className="py-3.5 px-4">Title</th>
-                              <th className="py-3.5 px-4">Album</th>
-                              <th className="py-3.5 px-4 w-16 text-center">Length</th>
-                              <th className="py-3.5 px-4 w-20 text-center"></th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-zinc-900/50">
-                            {library.filter(s => (s.artist || "Unknown Artist") === selectedArtist).map((song, i, arr) => {
-                              const isCurrent = currentSong?.path === song.path;
-                              return (
-                                <tr
-                                  key={song.path}
-                                  onMouseEnter={() => setHoveredTrack(song.path)}
-                                  onMouseLeave={() => setHoveredTrack(null)}
-                                  onClick={() => playQueue(arr, i)}
-                                  className={`group text-sm transition duration-150 cursor-pointer ${
-                                    isCurrent
-                                      ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
-                                      : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
-                                  }`}
-                                >
-                                  <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
-                                    {hoveredTrack === song.path ? (
-                                      isCurrent && isPlaying ? (
-                                        <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      // Artist Detail View
+                      <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-in slide-in-from-left-4 duration-200">
+                        <div className="flex items-center gap-4 bg-zinc-900/10 border border-zinc-900/40 p-4 rounded-2xl animate-in slide-in-from-top-2 duration-200">
+                          <div className="w-14 h-14 rounded-full border border-zinc-800 shadow-md flex-shrink-0 overflow-hidden">
+                            <LazyCover songPath={artistsGroup[selectedArtist]?.[0]?.path || ""} fallbackIcon={User} isRound={true} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase">Artist</span>
+                            <h2 className="text-xl font-bold text-white truncate max-w-md mt-0.5" title={selectedArtist}>
+                              {selectedArtist}
+                            </h2>
+                          </div>
+                          <button
+                            onClick={() => setSelectedArtist(null)}
+                            className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition cursor-pointer"
+                          >
+                            &larr; Back
+                          </button>
+                        </div>
+                        
+                        {/* Songs list by this artist */}
+                        <div className="flex-1 overflow-y-auto pr-1 border border-zinc-900/60 rounded-2xl bg-zinc-900/10 backdrop-blur-sm">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="border-b border-zinc-900 text-[11px] font-bold text-zinc-500 tracking-wider uppercase">
+                                <th className="py-3.5 px-4 w-12 text-center">#</th>
+                                <th className="py-3.5 px-4">Title</th>
+                                <th className="py-3.5 px-4">Album</th>
+                                <th className="py-3.5 px-4 w-16 text-center">Length</th>
+                                <th className="py-3.5 px-4 w-20 text-center"></th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-900/50">
+                              {(artistsGroup[selectedArtist] || []).map((song, i, arr) => {
+                                const isCurrent = currentSong?.path === song.path;
+                                return (
+                                  <tr
+                                    key={song.path}
+                                    onMouseEnter={() => setHoveredTrack(song.path)}
+                                    onMouseLeave={() => setHoveredTrack(null)}
+                                    onClick={() => playQueue(arr, i)}
+                                    className={`group text-sm transition duration-150 cursor-pointer ${
+                                      isCurrent
+                                        ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                        : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
+                                    }`}
+                                  >
+                                    <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
+                                      {hoveredTrack === song.path ? (
+                                        isCurrent && isPlaying ? (
+                                          <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
+                                        ) : (
+                                          <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
+                                        )
+                                      ) : isCurrent && isPlaying ? (
+                                        <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
+                                          <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                          <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                          <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
+                                        </div>
                                       ) : (
-                                        <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
-                                      )
-                                    ) : isCurrent && isPlaying ? (
-                                      <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
-                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
-                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
+                                        <span className="text-zinc-500">{i + 1}</span>
+                                      )}
+                                    </td>
+                                    <td className="py-3.5 px-4 font-semibold truncate max-w-xs">{song.title}</td>
+                                    <td className="py-3.5 px-4 text-zinc-400 group-hover:text-zinc-300 font-medium truncate max-w-xs">{song.album}</td>
+                                    <td className="py-3.5 px-4 text-center font-mono text-xs text-zinc-400">{formatTime(song.duration)}</td>
+                                    <td className="py-3.5 px-4 text-center">
+                                      <div className="flex justify-center gap-1">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            addToQueue(song);
+                                          }}
+                                          className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition"
+                                          title="Add to queue"
+                                        >
+                                          <ListMusic className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPlaylistMenuTrack(song);
+                                          }}
+                                          className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition"
+                                          title="Add to playlist"
+                                        >
+                                          <Plus className="w-3.5 h-3.5" />
+                                        </button>
                                       </div>
-                                    ) : (
-                                      <span className="text-zinc-500">{i + 1}</span>
-                                    )}
-                                  </td>
-                                  <td className="py-3.5 px-4 font-semibold truncate max-w-xs">{song.title}</td>
-                                  <td className="py-3.5 px-4 text-zinc-400 group-hover:text-zinc-300 font-medium truncate max-w-xs">{song.album}</td>
-                                  <td className="py-3.5 px-4 text-center font-mono text-xs text-zinc-400">{formatTime(song.duration)}</td>
-                                  <td className="py-3.5 px-4 text-center">
-                                    <div className="flex justify-center gap-1">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          addToQueue(song);
-                                        }}
-                                        className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition"
-                                        title="Add to queue"
-                                      >
-                                        <ListMusic className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setPlaylistMenuTrack(song);
-                                        }}
-                                        className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition"
-                                        title="Add to playlist"
-                                      >
-                                        <Plus className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Albums Tab */}
               {activeTab === "albums" && (
@@ -783,8 +872,8 @@ function App() {
                               onClick={() => setSelectedAlbum(album)}
                               className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-4 rounded-2xl cursor-pointer transition duration-300 flex flex-col group"
                             >
-                              <div className="w-full aspect-square rounded-xl bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative overflow-hidden shadow-md">
-                                <Disc className="w-12 h-12 text-zinc-300/80 group-hover:rotate-12 transition duration-550" />
+                              <div className="w-full aspect-square rounded-xl mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative overflow-hidden shadow-md">
+                                <LazyCover songPath={songs[0]?.path || ""} fallbackIcon={Disc} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end p-3">
                                   <span className="text-[10px] text-white font-bold bg-zinc-900/90 px-2 py-1 rounded-lg">
                                     {songs.length} tracks
@@ -805,16 +894,22 @@ function App() {
                   ) : (
                     // Album Detail View
                     <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-in slide-in-from-left-4 duration-200">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4 bg-zinc-900/10 border border-zinc-900/40 p-4 rounded-2xl animate-in slide-in-from-top-2 duration-200">
+                        <div className="w-14 h-14 rounded-xl border border-zinc-800 shadow-md flex-shrink-0 overflow-hidden">
+                          <LazyCover songPath={library.find(s => (s.album || "Unknown Album") === selectedAlbum)?.path || ""} fallbackIcon={Disc} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase">Album</span>
+                          <h2 className="text-xl font-bold text-white truncate max-w-md mt-0.5">
+                            {selectedAlbum}
+                          </h2>
+                        </div>
                         <button
                           onClick={() => setSelectedAlbum(null)}
-                          className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition cursor-pointer"
+                          className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition cursor-pointer"
                         >
-                          &larr; Back to Albums
+                          &larr; Back
                         </button>
-                        <h2 className="text-2xl font-bold text-white truncate max-w-md">
-                          {selectedAlbum}
-                        </h2>
                       </div>
                       
                       {/* Album Info & Songs */}
@@ -831,6 +926,11 @@ function App() {
                           </thead>
                           <tbody className="divide-y divide-zinc-900/50">
                             {library.filter(s => (s.album || "Unknown Album") === selectedAlbum).sort((a, b) => {
+                              const diskA = a.disk !== null && a.disk !== undefined ? a.disk : 1;
+                              const diskB = b.disk !== null && b.disk !== undefined ? b.disk : 1;
+                              if (diskA !== diskB) {
+                                return diskA - diskB;
+                              }
                               const trackA = a.track !== null && a.track !== undefined ? a.track : 999;
                               const trackB = b.track !== null && b.track !== undefined ? b.track : 999;
                               return trackA - trackB;
@@ -1092,8 +1192,14 @@ function App() {
                                 onClick={() => setSelectedPlaylist(name)}
                                 className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col group relative"
                               >
-                                <div className="w-full aspect-square rounded-xl bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative shadow-inner">
-                                  <ListMusic className="w-10 h-10 text-zinc-300/80 group-hover:scale-110 transition duration-300" />
+                                <div className="w-full aspect-square rounded-xl mb-4 border border-zinc-800/80 group-hover:scale-102 transition duration-300 relative overflow-hidden shadow-md">
+                                  {songs.length > 0 ? (
+                                    <LazyCover songPath={songs[0].path} fallbackIcon={ListMusic} />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-zinc-950 flex items-center justify-center rounded-xl">
+                                      <ListMusic className="w-10 h-10 text-zinc-500" />
+                                    </div>
+                                  )}
                                 </div>
                                 <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-zinc-300 transition" title={name}>
                                   {name}
@@ -1124,16 +1230,28 @@ function App() {
                     // Playlist Detail View
                     <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-in slide-in-from-left-4 duration-200">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4 bg-zinc-900/10 border border-zinc-900/40 p-4 rounded-2xl animate-in slide-in-from-top-2 duration-200">
+                          <div className="w-14 h-14 rounded-xl border border-zinc-800 shadow-md flex-shrink-0 overflow-hidden">
+                            {((playlists[selectedPlaylist] || [])).length > 0 ? (
+                              <LazyCover songPath={playlists[selectedPlaylist][0].path} fallbackIcon={ListMusic} />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-zinc-950 flex items-center justify-center rounded-xl">
+                                <ListMusic className="w-6 h-6 text-zinc-500" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase">Playlist</span>
+                            <h2 className="text-xl font-bold text-white truncate max-w-md mt-0.5">
+                              {selectedPlaylist}
+                            </h2>
+                          </div>
                           <button
                             onClick={() => setSelectedPlaylist(null)}
-                            className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition cursor-pointer"
+                            className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition cursor-pointer"
                           >
-                            &larr; Back to Playlists
+                            &larr; Back
                           </button>
-                          <h2 className="text-2xl font-bold text-white truncate max-w-md">
-                            {selectedPlaylist}
-                          </h2>
                         </div>
                         
                         {(playlists[selectedPlaylist] || []).length > 0 && (
