@@ -478,6 +478,14 @@ fn get_stream_port(state: tauri::State<'_, StreamPort>) -> u16 {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+  #[cfg(target_os = "linux")]
+  {
+    // Fix WebKitGTK GPU acceleration crash on Wayland/Hyprland with Nvidia/hybrid GPUs
+    if std::env::var("WEBKIT_DISABLE_DMABUF_RENDERER").is_err() {
+      std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+  }
+
   tauri::Builder::default()
     .setup(|app| {
       let port = start_media_server();
