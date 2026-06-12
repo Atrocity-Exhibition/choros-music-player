@@ -66,11 +66,12 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                     let mut duration = 0.0;
 
                     // Parse metadata with lofty
-                    if let Ok(tagged_file) = Probe::open(file_path)
-                        .map_err(|e| e.to_string())?
-                        .guess_file_type()
-                        .map_err(|e| e.to_string())?
-                        .read() {
+                    let parse_result = Probe::open(file_path)
+                        .map_err(|e| e.to_string())
+                        .and_then(|p| p.guess_file_type().map_err(|e| e.to_string()))
+                        .and_then(|p| p.read().map_err(|e| e.to_string()));
+
+                    if let Ok(tagged_file) = parse_result {
                         duration = tagged_file.properties().duration().as_secs_f64();
                         
                         if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {

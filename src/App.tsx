@@ -514,8 +514,12 @@ function App() {
                 disabled={isScanning}
                 className="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 rounded-xl font-bold flex items-center justify-center gap-2 transition duration-200 disabled:opacity-50 cursor-pointer"
               >
-                <FolderOpen className="w-4 h-4" />
-                <span>Import Folder</span>
+                {isScanning ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FolderOpen className="w-4 h-4" />
+                )}
+                <span>{isScanning ? "Scanning..." : "Import Folder"}</span>
               </button>
             )}
           </div>
@@ -539,7 +543,11 @@ function App() {
                 disabled={isScanning}
                 className="px-6 py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-white/5 transition duration-300 cursor-pointer disabled:opacity-50"
               >
-                <FolderOpen className="w-4 h-4" />
+                {isScanning ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FolderOpen className="w-4 h-4" />
+                )}
                 {isScanning ? "Scanning Directory..." : "Select Local Music Folder"}
               </button>
             </div>
@@ -770,7 +778,21 @@ function App() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-zinc-900/50">
-                              {(artistsGroup[selectedArtist] || []).map((song, i, arr) => {
+                              {(artistsGroup[selectedArtist] || []).sort((a, b) => {
+                                const albumA = a.album || "Unknown Album";
+                                const albumB = b.album || "Unknown Album";
+                                if (albumA !== albumB) {
+                                  return albumA.localeCompare(albumB);
+                                }
+                                const diskA = a.disk !== null && a.disk !== undefined ? a.disk : 1;
+                                const diskB = b.disk !== null && b.disk !== undefined ? b.disk : 1;
+                                if (diskA !== diskB) {
+                                  return diskA - diskB;
+                                }
+                                const trackA = a.track !== null && a.track !== undefined ? a.track : 999;
+                                const trackB = b.track !== null && b.track !== undefined ? b.track : 999;
+                                return trackA - trackB;
+                              }).map((song, i, arr) => {
                                 const isCurrent = currentSong?.path === song.path;
                                 return (
                                   <tr
@@ -1077,7 +1099,21 @@ function App() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-900/50">
-                            {library.filter(s => (s.genre || "Unknown Genre") === selectedGenre).map((song, i, arr) => {
+                            {library.filter(s => (s.genre || "Unknown Genre") === selectedGenre).sort((a, b) => {
+                              const albumA = a.album || "Unknown Album";
+                              const albumB = b.album || "Unknown Album";
+                              if (albumA !== albumB) {
+                                return albumA.localeCompare(albumB);
+                              }
+                              const diskA = a.disk !== null && a.disk !== undefined ? a.disk : 1;
+                              const diskB = b.disk !== null && b.disk !== undefined ? b.disk : 1;
+                              if (diskA !== diskB) {
+                                return diskA - diskB;
+                              }
+                              const trackA = a.track !== null && a.track !== undefined ? a.track : 999;
+                              const trackB = b.track !== null && b.track !== undefined ? b.track : 999;
+                              return trackA - trackB;
+                            }).map((song, i, arr) => {
                               const isCurrent = currentSong?.path === song.path;
                               return (
                                 <tr
@@ -1558,9 +1594,14 @@ function App() {
                       <button
                         onClick={handleScan}
                         disabled={isScanning}
-                        className="px-4 py-2.5 bg-zinc-100 hover:bg-violet-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                        className="px-4 py-2.5 bg-zinc-100 hover:bg-violet-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
                       >
-                        Change Directory
+                        {isScanning ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <FolderOpen className="w-3.5 h-3.5" />
+                        )}
+                        <span>{isScanning ? "Scanning..." : "Change Directory"}</span>
                       </button>
                       <button
                         onClick={clearLibrary}
