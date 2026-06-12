@@ -284,8 +284,8 @@ function App() {
   return (
     <div className="h-screen w-screen bg-zinc-950 text-zinc-100 flex flex-col overflow-hidden relative select-none">
       {/* Background Glows (Glassmorphism Aurora effect) */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
-      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-fuchsia-600/10 rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: "3s" }}></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/[0.015] rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
+      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-zinc-400/[0.01] rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: "3s" }}></div>
 
       {/* Main Workspace layout */}
       <div className="flex-1 flex overflow-hidden z-10">
@@ -293,8 +293,8 @@ function App() {
         {/* Sidebar */}
         <aside className="w-64 bg-zinc-900/60 border-r border-zinc-800/50 backdrop-blur-md flex flex-col p-6 gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <Music className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800/80 flex items-center justify-center shadow-sm">
+              <Music className="w-4.5 h-4.5 text-zinc-200" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white leading-none">Choros</h1>
@@ -307,7 +307,7 @@ function App() {
               onClick={() => selectTab("library")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "library"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -318,7 +318,7 @@ function App() {
               onClick={() => selectTab("artists")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "artists"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -329,7 +329,7 @@ function App() {
               onClick={() => selectTab("albums")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "albums"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -340,7 +340,7 @@ function App() {
               onClick={() => selectTab("genres")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "genres"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -351,7 +351,7 @@ function App() {
               onClick={() => selectTab("playlists")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "playlists"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -362,7 +362,7 @@ function App() {
               onClick={() => selectTab("history")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "history"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -374,14 +374,14 @@ function App() {
               onClick={() => selectTab("queue")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium relative ${
                 activeTab === "queue"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
               <ListMusic className="w-4 h-4" />
               <span>Play Queue</span>
               {queue.length > 0 && (
-                <span className="absolute right-4 text-[10px] bg-violet-600 text-white font-bold px-1.5 py-0.5 rounded-full">
+                <span className="absolute right-4 text-[10px] bg-zinc-100 text-zinc-950 font-bold px-1.5 py-0.5 rounded-full">
                   {queue.length}
                 </span>
               )}
@@ -390,7 +390,7 @@ function App() {
               onClick={() => selectTab("settings")}
               className={`flex items-center gap-3 px-4 py-2 rounded-xl transition text-sm font-medium ${
                 activeTab === "settings"
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20 shadow-inner"
+                  ? "bg-zinc-900 text-zinc-100 border border-zinc-800/80 shadow-sm font-semibold"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
               }`}
             >
@@ -406,7 +406,7 @@ function App() {
             {currentFolder ? (
               <div className="bg-zinc-950/40 border border-zinc-800/50 p-3.5 rounded-xl flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-zinc-300 font-medium">
-                  <Folder className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" />
+                  <Folder className="w-3.5 h-3.5 text-zinc-300 flex-shrink-0" />
                   <span className="truncate">Active Library</span>
                 </div>
                 <p className="font-mono text-[10px] text-zinc-500 break-all leading-normal">
@@ -435,7 +435,7 @@ function App() {
               <button
                 onClick={handleScan}
                 disabled={isScanning}
-                className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-violet-500/25 transition duration-300 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 rounded-xl font-bold flex items-center justify-center gap-2 transition duration-200 disabled:opacity-50 cursor-pointer"
               >
                 <FolderOpen className="w-4 h-4" />
                 <span>Import Folder</span>
@@ -450,8 +450,8 @@ function App() {
             // Empty Library Landing Page
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">
               <div className="w-20 h-20 rounded-3xl bg-zinc-900 border border-zinc-800/80 flex items-center justify-center mb-6 shadow-xl relative">
-                <Disc className="w-10 h-10 text-violet-500 animate-pulse" />
-                <div className="absolute inset-0 rounded-3xl bg-violet-500/5 blur-xl"></div>
+                <Disc className="w-10 h-10 text-zinc-400 animate-pulse" />
+                <div className="absolute inset-0 rounded-3xl bg-zinc-100/5 blur-xl"></div>
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Build your Music Library</h2>
               <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
@@ -502,7 +502,7 @@ function App() {
                         placeholder="Search songs, artists, albums..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-zinc-900/50 hover:bg-zinc-900/80 border border-zinc-800/80 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none transition text-white placeholder-zinc-500"
+                        className="w-full bg-zinc-900/50 hover:bg-zinc-900/80 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none transition text-white placeholder-zinc-500"
                       />
                     </div>
                   </div>
@@ -530,24 +530,24 @@ function App() {
                               onClick={() => playQueue(filteredLibrary, i)}
                               className={`group text-sm transition duration-150 cursor-pointer ${
                                 isCurrent
-                                  ? "bg-violet-600/10 text-violet-400 hover:bg-violet-600/15"
-                                  : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                  ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                  : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                               }`}
                             >
                               {/* Index / Play Control Column */}
                               <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
                                 {hoveredTrack === song.path ? (
                                   isCurrent && isPlaying ? (
-                                    <Pause className="w-3.5 h-3.5 text-violet-400 mx-auto" />
+                                    <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
                                   ) : (
                                     <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
                                   )
                                 ) : isCurrent && isPlaying ? (
                                   // Waveform anim
                                   <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                    <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                    <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                    <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                    <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                    <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                    <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                   </div>
                                 ) : (
                                   <span className="text-zinc-500">{i + 1}</span>
@@ -637,13 +637,13 @@ function App() {
                             <div
                               key={artist}
                               onClick={() => setSelectedArtist(artist)}
-                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-violet-500/25 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col items-center text-center group"
+                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col items-center text-center group"
                             >
-                              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600/20 to-fuchsia-600/20 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-105 transition duration-300 relative">
-                                <User className="w-9 h-9 text-violet-400" />
-                                <div className="absolute inset-0 rounded-full bg-violet-500/5 blur-md opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-105 transition duration-300 relative">
+                                <User className="w-9 h-9 text-zinc-300" />
+                                <div className="absolute inset-0 rounded-full bg-zinc-100/5 blur-md opacity-0 group-hover:opacity-100 transition duration-300"></div>
                               </div>
-                              <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-violet-400 transition">
+                              <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-zinc-300 transition">
                                 {artist}
                               </h3>
                               <p className="text-xs text-zinc-500 font-medium mt-1">
@@ -692,22 +692,22 @@ function App() {
                                   onClick={() => playQueue(arr, i)}
                                   className={`group text-sm transition duration-150 cursor-pointer ${
                                     isCurrent
-                                      ? "bg-violet-600/10 text-violet-400 hover:bg-violet-600/15"
-                                      : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                      ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                      : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                                   }`}
                                 >
                                   <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
                                     {hoveredTrack === song.path ? (
                                       isCurrent && isPlaying ? (
-                                        <Pause className="w-3.5 h-3.5 text-violet-400 mx-auto" />
+                                        <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
                                       ) : (
                                         <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
                                       )
                                     ) : isCurrent && isPlaying ? (
                                       <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                       </div>
                                     ) : (
                                       <span className="text-zinc-500">{i + 1}</span>
@@ -781,17 +781,17 @@ function App() {
                             <div
                               key={album}
                               onClick={() => setSelectedAlbum(album)}
-                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-violet-500/25 p-4 rounded-2xl cursor-pointer transition duration-300 flex flex-col group"
+                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-4 rounded-2xl cursor-pointer transition duration-300 flex flex-col group"
                             >
-                              <div className="w-full aspect-square rounded-xl bg-gradient-to-tr from-violet-600/10 to-fuchsia-600/10 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative overflow-hidden shadow-md">
-                                <Disc className="w-12 h-12 text-violet-400/80 group-hover:rotate-12 transition duration-550" />
+                              <div className="w-full aspect-square rounded-xl bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative overflow-hidden shadow-md">
+                                <Disc className="w-12 h-12 text-zinc-300/80 group-hover:rotate-12 transition duration-550" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end p-3">
-                                  <span className="text-[10px] text-white font-bold bg-violet-600/90 px-2 py-1 rounded-lg">
+                                  <span className="text-[10px] text-white font-bold bg-zinc-900/90 px-2 py-1 rounded-lg">
                                     {songs.length} tracks
                                   </span>
                                 </div>
                               </div>
-                              <h3 className="font-bold text-sm text-white truncate group-hover:text-violet-400 transition" title={album}>
+                              <h3 className="font-bold text-sm text-white truncate group-hover:text-zinc-300 transition" title={album}>
                                 {album}
                               </h3>
                               <p className="text-xs text-zinc-500 font-medium truncate mt-0.5" title={artist}>
@@ -844,22 +844,22 @@ function App() {
                                   onClick={() => playQueue(arr, i)}
                                   className={`group text-sm transition duration-150 cursor-pointer ${
                                     isCurrent
-                                      ? "bg-violet-600/10 text-violet-400 hover:bg-violet-600/15"
-                                      : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                      ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                      : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                                   }`}
                                 >
                                   <td className="py-3.5 px-4 text-center font-medium font-mono text-xs text-zinc-500">
                                     {hoveredTrack === song.path ? (
                                       isCurrent && isPlaying ? (
-                                        <Pause className="w-3.5 h-3.5 text-violet-400 mx-auto" />
+                                        <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
                                       ) : (
                                         <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
                                       )
                                     ) : isCurrent && isPlaying ? (
                                       <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                       </div>
                                     ) : (
                                       song.track !== null && song.track !== undefined ? song.track : i + 1
@@ -932,12 +932,12 @@ function App() {
                             <div
                               key={genre}
                               onClick={() => setSelectedGenre(genre)}
-                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-violet-500/25 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col items-center text-center group"
+                              className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col items-center text-center group"
                             >
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-violet-600/20 to-fuchsia-600/20 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-105 transition duration-300">
-                                <Tag className="w-7 h-7 text-violet-400" />
+                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-105 transition duration-300">
+                                <Tag className="w-7 h-7 text-zinc-300" />
                               </div>
-                              <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-violet-400 transition">
+                              <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-zinc-300 transition">
                                 {genre}
                               </h3>
                               <p className="text-xs text-zinc-500 font-medium mt-1">
@@ -987,22 +987,22 @@ function App() {
                                   onClick={() => playQueue(arr, i)}
                                   className={`group text-sm transition duration-150 cursor-pointer ${
                                     isCurrent
-                                      ? "bg-violet-600/10 text-violet-400 hover:bg-violet-600/15"
-                                      : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                      ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                      : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                                   }`}
                                 >
                                   <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
                                     {hoveredTrack === song.path ? (
                                       isCurrent && isPlaying ? (
-                                        <Pause className="w-3.5 h-3.5 text-violet-400 mx-auto" />
+                                        <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
                                       ) : (
                                         <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
                                       )
                                     ) : isCurrent && isPlaying ? (
                                       <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                        <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                        <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                       </div>
                                     ) : (
                                       <span className="text-zinc-500">{i + 1}</span>
@@ -1067,7 +1067,7 @@ function App() {
                               createPlaylist(name.trim());
                             }
                           }}
-                          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-lg shadow-violet-500/10"
+                          className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-sm"
                         >
                           <Plus className="w-4 h-4" />
                           <span>New Playlist</span>
@@ -1090,12 +1090,12 @@ function App() {
                               <div
                                 key={name}
                                 onClick={() => setSelectedPlaylist(name)}
-                                className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-violet-500/25 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col group relative"
+                                className="bg-zinc-900/30 hover:bg-zinc-900/60 border border-zinc-800/40 hover:border-zinc-700/50 p-5 rounded-2xl cursor-pointer transition duration-300 flex flex-col group relative"
                               >
-                                <div className="w-full aspect-square rounded-xl bg-gradient-to-tr from-violet-600/15 to-fuchsia-600/15 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative shadow-inner">
-                                  <ListMusic className="w-10 h-10 text-violet-400/80 group-hover:scale-110 transition duration-300" />
+                                <div className="w-full aspect-square rounded-xl bg-gradient-to-tr from-zinc-900 to-zinc-900/50 flex items-center justify-center mb-4 border border-zinc-800 group-hover:scale-102 transition duration-300 relative shadow-inner">
+                                  <ListMusic className="w-10 h-10 text-zinc-300/80 group-hover:scale-110 transition duration-300" />
                                 </div>
-                                <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-violet-400 transition" title={name}>
+                                <h3 className="font-bold text-sm text-white truncate w-full group-hover:text-zinc-300 transition" title={name}>
                                   {name}
                                 </h3>
                                 <p className="text-xs text-zinc-500 font-medium mt-1">
@@ -1139,7 +1139,7 @@ function App() {
                         {(playlists[selectedPlaylist] || []).length > 0 && (
                           <button
                             onClick={() => playQueue(playlists[selectedPlaylist!], 0)}
-                            className="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2 hover:shadow-lg hover:shadow-violet-500/25 duration-300 cursor-pointer"
+                            className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-sm"
                           >
                             <Play className="w-3.5 h-3.5 fill-current" />
                             <span>Play Playlist</span>
@@ -1180,22 +1180,22 @@ function App() {
                                     onClick={() => playQueue(playlists[selectedPlaylist!], i)}
                                     className={`group text-sm transition duration-150 cursor-pointer ${
                                       isCurrent
-                                        ? "bg-violet-600/10 text-violet-400 hover:bg-violet-600/15"
-                                        : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                        ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                        : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                                     }`}
                                   >
                                     <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
                                       {hoveredTrack === song.path ? (
                                         isCurrent && isPlaying ? (
-                                          <Pause className="w-3.5 h-3.5 text-violet-400 mx-auto" />
+                                          <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
                                         ) : (
                                           <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
                                         )
                                       ) : isCurrent && isPlaying ? (
                                         <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                          <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                          <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                          <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                          <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                          <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                          <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                         </div>
                                       ) : (
                                         <span className="text-zinc-500">{i + 1}</span>
@@ -1271,22 +1271,22 @@ function App() {
                                 onClick={() => playQueue([song], 0)}
                                 className={`group text-sm transition duration-150 cursor-pointer ${
                                   isCurrent
-                                    ? "bg-violet-600/10 text-violet-400 hover:bg-violet-600/15"
-                                    : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                    ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
+                                    : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                                 }`}
                               >
                                 <td className="py-3.5 px-4 text-center font-medium font-mono text-xs">
                                   {hoveredTrack === `${song.path}-${i}` ? (
                                     isCurrent && isPlaying ? (
-                                      <Pause className="w-3.5 h-3.5 text-violet-400 mx-auto" />
+                                      <Pause className="w-3.5 h-3.5 text-zinc-300 mx-auto" />
                                     ) : (
                                       <Play className="w-3.5 h-3.5 text-zinc-300 group-hover:text-white mx-auto fill-current" />
                                     )
                                   ) : isCurrent && isPlaying ? (
                                     <div className="flex items-end justify-center gap-0.5 h-3 w-4 mx-auto">
-                                      <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                      <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                      <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                      <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                      <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                      <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                     </div>
                                   ) : (
                                     <span className="text-zinc-500">{i + 1}</span>
@@ -1371,17 +1371,17 @@ function App() {
                               onClick={() => usePlayerStore.setState({ currentIndex: i, currentSong: song })}
                               className={`group flex items-center justify-between p-4 transition duration-150 cursor-pointer ${
                                 isCurrent
-                                  ? "bg-violet-600/10 text-violet-400"
-                                  : "hover:bg-zinc-900/35 text-zinc-300 hover:text-zinc-100"
+                                  ? "bg-zinc-100/10 text-zinc-300"
+                                  : "hover:bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 transition-colors duration-150"
                               }`}
                             >
                               <div className="flex items-center gap-4 min-w-[200px]">
                                 <span className="font-mono text-xs font-semibold text-zinc-500 w-6">
                                   {isCurrent && isPlaying ? (
                                     <div className="flex items-end gap-0.5 h-3 w-4">
-                                      <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-1"></div>
-                                      <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-2"></div>
-                                      <div className="w-0.5 bg-violet-400 rounded-full animate-bounce-custom-3"></div>
+                                      <div className="w-0.5 bg-white rounded-full animate-bounce-custom-1"></div>
+                                      <div className="w-0.5 bg-white rounded-full animate-bounce-custom-2"></div>
+                                      <div className="w-0.5 bg-white rounded-full animate-bounce-custom-3"></div>
                                     </div>
                                   ) : (
                                     i + 1
@@ -1431,7 +1431,7 @@ function App() {
                       <p className="text-xs text-zinc-400 leading-normal">
                         Import folder path currently configured for scanning:
                       </p>
-                      <div className="bg-zinc-950/50 font-mono text-xs p-3 border border-zinc-900 rounded-xl text-violet-400 break-all select-all">
+                      <div className="bg-zinc-950/50 font-mono text-xs p-3 border border-zinc-900 rounded-xl text-zinc-300 break-all select-all">
                         {currentFolder || "No folder mapped yet."}
                       </div>
                     </div>
@@ -1440,7 +1440,7 @@ function App() {
                       <button
                         onClick={handleScan}
                         disabled={isScanning}
-                        className="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                        className="px-4 py-2.5 bg-zinc-100 hover:bg-violet-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer"
                       >
                         Change Directory
                       </button>
@@ -1455,7 +1455,7 @@ function App() {
 
                   <div className="bg-zinc-900/35 border border-zinc-800/80 rounded-2xl p-6 flex flex-col gap-4">
                     <div className="flex items-center gap-2.5 text-white">
-                      <Keyboard className="w-4 h-4 text-violet-400" />
+                      <Keyboard className="w-4 h-4 text-zinc-300" />
                       <h3 className="text-sm font-bold uppercase tracking-wider">Keyboard Bindings</h3>
                     </div>
                     
@@ -1528,7 +1528,7 @@ function App() {
                       await addSongToPlaylist(name, playlistMenuTrack);
                       setPlaylistMenuTrack(null);
                     }}
-                    className="w-full text-left p-3 hover:bg-zinc-850/60 border border-zinc-800/40 hover:border-violet-500/20 rounded-xl transition text-sm text-zinc-300 hover:text-white font-medium cursor-pointer"
+                    className="w-full text-left p-3 hover:bg-zinc-850/60 border border-zinc-800/40 hover:border-zinc-800/50 rounded-xl transition text-sm text-zinc-300 hover:text-white font-medium cursor-pointer"
                   >
                     {name}
                   </button>
@@ -1559,7 +1559,7 @@ function App() {
               />
               <button
                 type="submit"
-                className="bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-3.5 py-2 text-xs font-bold transition flex-shrink-0 cursor-pointer animate-none"
+                className="bg-zinc-100 hover:bg-violet-500 text-white rounded-xl px-3.5 py-2 text-xs font-bold transition flex-shrink-0 cursor-pointer animate-none"
               >
                 Add
               </button>
@@ -1578,8 +1578,8 @@ function App() {
               <img src={currentCover} alt="Cover art" className="w-full h-full object-cover" />
             ) : currentSong ? (
               // Vinyl fallback rotation animation
-              <div className="w-full h-full bg-gradient-to-tr from-violet-600/30 to-fuchsia-600/30 flex items-center justify-center relative">
-                <Disc className={`w-7 h-7 text-violet-400/80 ${isPlaying ? "animate-spin" : ""}`} style={{ animationDuration: "12s" }} />
+              <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-zinc-950 flex items-center justify-center relative">
+                <Disc className={`w-7 h-7 text-zinc-300/80 ${isPlaying ? "animate-spin" : ""}`} style={{ animationDuration: "12s" }} />
                 <div className="absolute w-2 h-2 rounded-full bg-zinc-950"></div>
               </div>
             ) : (
@@ -1589,7 +1589,7 @@ function App() {
             )}
             {isLoadingCover && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <RefreshCw className="w-4 h-4 text-violet-400 animate-spin" />
+                <RefreshCw className="w-4 h-4 text-zinc-300 animate-spin" />
               </div>
             )}
           </div>
@@ -1621,7 +1621,7 @@ function App() {
             <button
               onClick={toggleShuffle}
               className={`p-1.5 hover:bg-zinc-800 rounded-lg transition ${
-                isShuffle ? "text-violet-400" : "text-zinc-500 hover:text-zinc-300"
+                isShuffle ? "text-zinc-300" : "text-zinc-500 hover:text-zinc-300"
               }`}
               title="Shuffle (S)"
             >
@@ -1661,13 +1661,13 @@ function App() {
             <button
               onClick={toggleRepeat}
               className={`p-1.5 hover:bg-zinc-800 rounded-lg transition relative ${
-                isRepeat !== "none" ? "text-violet-400" : "text-zinc-500 hover:text-zinc-300"
+                isRepeat !== "none" ? "text-zinc-300" : "text-zinc-500 hover:text-zinc-300"
               }`}
               title={`Repeat: ${isRepeat} (R)`}
             >
               <Repeat className="w-4 h-4" />
               {isRepeat === "one" && (
-                <span className="absolute -top-0.5 -right-0.5 text-[8px] bg-violet-600 text-white font-extrabold px-1 rounded-full scale-75">
+                <span className="absolute -top-0.5 -right-0.5 text-[8px] bg-zinc-100 text-zinc-950 font-bold px-1 rounded-full scale-75">
                   1
                 </span>
               )}
@@ -1698,7 +1698,7 @@ function App() {
             onClick={() => setActiveTab(activeTab === "queue" ? "library" : "queue")}
             className={`p-2 rounded-xl transition ${
               activeTab === "queue"
-                ? "bg-violet-600/15 text-violet-400 border border-violet-500/20"
+                ? "bg-zinc-100/15 text-zinc-300 border border-zinc-800/50"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-850"
             }`}
             title="Toggle Queue View"
