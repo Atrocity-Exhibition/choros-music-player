@@ -131,6 +131,7 @@ function App() {
     clearLibrary,
     setSearchQuery,
     setActiveTab,
+    playSong,
     playQueue,
     addToQueue,
     removeFromQueue,
@@ -154,6 +155,7 @@ function App() {
     loadHistory,
     recordSongPlayed,
     loadStreamPort,
+    updateSongMetadata,
   } = usePlayerStore();
 
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null);
@@ -165,6 +167,108 @@ function App() {
   const [playlistMenuTrack, setPlaylistMenuTrack] = useState<Song | null>(null);
   const progressBarRef = useRef<HTMLInputElement>(null);
   const loggedRef = useRef<string | null>(null);
+
+  // Metadata Editor and Context Menu States
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; song: Song } | null>(null);
+  const [editingSong, setEditingSong] = useState<Song | null>(null);
+  const [editMetadata, setEditMetadata] = useState<Omit<Song, 'path' | 'duration'>>({
+    title: "",
+    artist: "",
+    album: "",
+    genre: "",
+    track: null,
+    trackTotal: null,
+    disk: null,
+    diskTotal: null,
+    year: null,
+    albumArtist: "",
+    publisher: "",
+    copyright: "",
+    isrc: "",
+  });
+  const [isSavingMetadata, setIsSavingMetadata] = useState(false);
+
+  const handleContextMenu = (e: React.MouseEvent, song: Song) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const menuWidth = 180;
+    const menuHeight = 150;
+    let x = e.clientX;
+    let y = e.clientY;
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10;
+    }
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10;
+    }
+    setContextMenu({ x, y, song });
+  };
+
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setContextMenu(null);
+    };
+    window.addEventListener("click", handleGlobalClick);
+    return () => {
+      window.removeEventListener("click", handleGlobalClick);
+    };
+  }, []);
+
+  const handleOpenEditMetadata = (song: Song) => {
+    setEditingSong(song);
+    setEditMetadata({
+      title: song.title || "",
+      artist: song.artist || "",
+      album: song.album || "",
+      genre: song.genre || "",
+      track: song.track,
+      trackTotal: song.trackTotal,
+      disk: song.disk,
+      diskTotal: song.diskTotal,
+      year: song.year,
+      albumArtist: song.albumArtist || "",
+      publisher: song.publisher || "",
+      copyright: song.copyright || "",
+      isrc: song.isrc || "",
+    });
+  };
+
+  const handleNumberChange = (field: keyof Omit<Song, 'path' | 'duration'>, val: string) => {
+    const parsed = parseInt(val, 10);
+    setEditMetadata(prev => ({
+      ...prev,
+      [field]: isNaN(parsed) || parsed < 0 ? null : parsed
+    }));
+  };
+
+  const handleSaveMetadata = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSong) return;
+    setIsSavingMetadata(true);
+    try {
+      await updateSongMetadata(editingSong.path, {
+        title: editMetadata.title,
+        artist: editMetadata.artist,
+        album: editMetadata.album,
+        genre: editMetadata.genre,
+        track: editMetadata.track,
+        trackTotal: editMetadata.trackTotal,
+        disk: editMetadata.disk,
+        diskTotal: editMetadata.diskTotal,
+        year: editMetadata.year,
+        albumArtist: editMetadata.albumArtist || null,
+        publisher: editMetadata.publisher || null,
+        copyright: editMetadata.copyright || null,
+        isrc: editMetadata.isrc || null,
+      });
+      setEditingSong(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save metadata: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsSavingMetadata(false);
+    }
+  };
 
   // Sync playback state
   useEffect(() => {
@@ -613,6 +717,7 @@ function App() {
                               onMouseEnter={() => setHoveredTrack(song.path)}
                               onMouseLeave={() => setHoveredTrack(null)}
                               onClick={() => playQueue(filteredLibrary, i)}
+                              onContextMenu={(e) => handleContextMenu(e, song)}
                               className={`group text-sm transition duration-150 cursor-pointer ${
                                 isCurrent
                                   ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
@@ -800,6 +905,7 @@ function App() {
                                     onMouseEnter={() => setHoveredTrack(song.path)}
                                     onMouseLeave={() => setHoveredTrack(null)}
                                     onClick={() => playQueue(arr, i)}
+                                    onContextMenu={(e) => handleContextMenu(e, song)}
                                     className={`group text-sm transition duration-150 cursor-pointer ${
                                       isCurrent
                                         ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
@@ -964,6 +1070,7 @@ function App() {
                                   onMouseEnter={() => setHoveredTrack(song.path)}
                                   onMouseLeave={() => setHoveredTrack(null)}
                                   onClick={() => playQueue(arr, i)}
+                                  onContextMenu={(e) => handleContextMenu(e, song)}
                                   className={`group text-sm transition duration-150 cursor-pointer ${
                                     isCurrent
                                       ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
@@ -1121,6 +1228,7 @@ function App() {
                                   onMouseEnter={() => setHoveredTrack(song.path)}
                                   onMouseLeave={() => setHoveredTrack(null)}
                                   onClick={() => playQueue(arr, i)}
+                                  onContextMenu={(e) => handleContextMenu(e, song)}
                                   className={`group text-sm transition duration-150 cursor-pointer ${
                                     isCurrent
                                       ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
@@ -1332,6 +1440,7 @@ function App() {
                                     onMouseEnter={() => setHoveredTrack(song.path)}
                                     onMouseLeave={() => setHoveredTrack(null)}
                                     onClick={() => playQueue(playlists[selectedPlaylist!], i)}
+                                    onContextMenu={(e) => handleContextMenu(e, song)}
                                     className={`group text-sm transition duration-150 cursor-pointer ${
                                       isCurrent
                                         ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
@@ -1423,6 +1532,7 @@ function App() {
                                 onMouseEnter={() => setHoveredTrack(`${song.path}-${i}`)}
                                 onMouseLeave={() => setHoveredTrack(null)}
                                 onClick={() => playQueue([song], 0)}
+                                onContextMenu={(e) => handleContextMenu(e, song)}
                                 className={`group text-sm transition duration-150 cursor-pointer ${
                                   isCurrent
                                     ? "bg-zinc-100/10 text-zinc-300 hover:bg-zinc-100/15"
@@ -1523,6 +1633,7 @@ function App() {
                             <div
                               key={`${song.path}-${i}`}
                               onClick={() => usePlayerStore.setState({ currentIndex: i, currentSong: song })}
+                              onContextMenu={(e) => handleContextMenu(e, song)}
                               className={`group flex items-center justify-between p-4 transition duration-150 cursor-pointer ${
                                 isCurrent
                                   ? "bg-zinc-100/10 text-zinc-300"
@@ -1722,6 +1833,248 @@ function App() {
               >
                 Add
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Context Menu Overlay */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-zinc-900/95 border border-zinc-800/80 rounded-xl shadow-2xl p-1.5 backdrop-blur-md min-w-[180px] animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              playSong(contextMenu.song);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-2 text-xs font-semibold text-zinc-350 hover:text-white hover:bg-zinc-800/60 rounded-lg transition flex items-center gap-2"
+          >
+            <Play className="w-3.5 h-3.5 fill-current text-zinc-400" />
+            <span>Play</span>
+          </button>
+          <button
+            onClick={() => {
+              addToQueue(contextMenu.song);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-2 text-xs font-semibold text-zinc-350 hover:text-white hover:bg-zinc-800/60 rounded-lg transition flex items-center gap-2"
+          >
+            <ListMusic className="w-3.5 h-3.5" />
+            <span>Add to Queue</span>
+          </button>
+          <button
+            onClick={() => {
+              handleOpenEditMetadata(contextMenu.song);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-2 text-xs font-semibold text-zinc-350 hover:text-white hover:bg-zinc-800/60 rounded-lg transition flex items-center gap-2 border-t border-zinc-800/60 mt-1 pt-2"
+          >
+            <Tag className="w-3.5 h-3.5" />
+            <span>Edit Metadata</span>
+          </button>
+        </div>
+      )}
+
+      {/* Edit Metadata Modal */}
+      {editingSong && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl w-full max-w-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <div>
+                <h3 className="text-base font-bold text-white">Edit Track Metadata</h3>
+                <span className="text-[10px] text-zinc-500 font-mono truncate max-w-lg block mt-0.5" title={editingSong.path}>
+                  {editingSong.path.split('/').pop()}
+                </span>
+              </div>
+              <button
+                onClick={() => setEditingSong(null)}
+                className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMetadata} className="flex-1 flex flex-col overflow-hidden gap-4">
+              <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-5 scrollbar-thin">
+                {/* Section 1: Main Info */}
+                <div>
+                  <h4 className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-3">Track Information</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Track Title</label>
+                      <input
+                        type="text"
+                        value={editMetadata.title}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, title: e.target.value })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Artist</label>
+                      <input
+                        type="text"
+                        value={editMetadata.artist}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, artist: e.target.value })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Album Artist</label>
+                      <input
+                        type="text"
+                        value={editMetadata.albumArtist ?? ""}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, albumArtist: e.target.value || null })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Album</label>
+                      <input
+                        type="text"
+                        value={editMetadata.album}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, album: e.target.value })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-zinc-800/40" />
+
+                {/* Section 2: Numbers */}
+                <div>
+                  <h4 className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-3">Release & Indexing</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Track #</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editMetadata.track ?? ""}
+                        onChange={(e) => handleNumberChange("track", e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Track Total</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editMetadata.trackTotal ?? ""}
+                        onChange={(e) => handleNumberChange("trackTotal", e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Disc #</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editMetadata.disk ?? ""}
+                        onChange={(e) => handleNumberChange("disk", e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Disc Total</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editMetadata.diskTotal ?? ""}
+                        onChange={(e) => handleNumberChange("diskTotal", e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 col-span-2 sm:col-span-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Year</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editMetadata.year ?? ""}
+                        onChange={(e) => handleNumberChange("year", e.target.value)}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-zinc-800/40" />
+
+                {/* Section 3: Extra info */}
+                <div>
+                  <h4 className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-3">Publishing & Identifiers</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Genre</label>
+                      <input
+                        type="text"
+                        value={editMetadata.genre}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, genre: e.target.value })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Publisher / Label</label>
+                      <input
+                        type="text"
+                        value={editMetadata.publisher ?? ""}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, publisher: e.target.value || null })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">Copyright Message</label>
+                      <input
+                        type="text"
+                        value={editMetadata.copyright ?? ""}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, copyright: e.target.value || null })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-zinc-400 font-semibold">ISRC</label>
+                      <input
+                        type="text"
+                        value={editMetadata.isrc ?? ""}
+                        onChange={(e) => setEditMetadata({ ...editMetadata, isrc: e.target.value || null })}
+                        className="bg-zinc-950 border border-zinc-800/80 focus:border-zinc-700/80 focus:ring-1 focus:ring-zinc-800/30 rounded-xl px-3 py-2 text-xs text-white outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800/80 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditingSong(null)}
+                  className="px-4 py-2 bg-zinc-950 hover:bg-zinc-850 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition cursor-pointer"
+                  disabled={isSavingMetadata}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-white hover:bg-zinc-200 text-zinc-950 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  disabled={isSavingMetadata}
+                >
+                  {isSavingMetadata ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         </div>

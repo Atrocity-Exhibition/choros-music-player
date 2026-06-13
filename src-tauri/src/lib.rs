@@ -1,6 +1,7 @@
 use std::path::Path;
 use lofty::prelude::*;
 use lofty::probe::Probe;
+use lofty::tag::ItemKey;
 use walkdir::WalkDir;
 use base64::{engine::general_purpose, Engine as _};
 use serde::{Serialize, Deserialize};
@@ -21,6 +22,13 @@ struct SongMetadata {
     track: Option<u32>,
     disk: Option<u32>,
     duration: f64,
+    album_artist: Option<String>,
+    track_total: Option<u32>,
+    disk_total: Option<u32>,
+    year: Option<u32>,
+    publisher: Option<String>,
+    copyright: Option<String>,
+    isrc: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -64,6 +72,13 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                     let mut track = None;
                     let mut disk = None;
                     let mut duration = 0.0;
+                    let mut album_artist = None;
+                    let mut track_total = None;
+                    let mut disk_total = None;
+                    let mut year = None;
+                    let mut publisher = None;
+                    let mut copyright = None;
+                    let mut isrc = None;
 
                     // Parse metadata with lofty
                     let parse_result = Probe::open(file_path)
@@ -97,6 +112,13 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                             }
                             track = tag.track();
                             disk = tag.disk();
+                            album_artist = tag.get_string(&ItemKey::AlbumArtist).map(|s| s.to_string());
+                            track_total = tag.track_total();
+                            disk_total = tag.get_string(&ItemKey::DiscTotal).map(|s| s.to_string()).and_then(|s| s.parse::<u32>().ok());
+                            year = tag.year();
+                            publisher = tag.get_string(&ItemKey::Publisher).map(|s| s.to_string());
+                            copyright = tag.get_string(&ItemKey::CopyrightMessage).map(|s| s.to_string());
+                            isrc = tag.get_string(&ItemKey::Isrc).map(|s| s.to_string());
                         }
                     }
 
@@ -109,6 +131,13 @@ fn scan_folder(folder_path: String) -> Result<Vec<SongMetadata>, String> {
                         track,
                         disk,
                         duration,
+                        album_artist,
+                        track_total,
+                        disk_total,
+                        year,
+                        publisher,
+                        copyright,
+                        isrc,
                     });
                 }
             }
@@ -477,6 +506,112 @@ fn get_stream_port(state: tauri::State<'_, StreamPort>) -> u16 {
     state.0
 }
 
+#[tauri::command]
+fn update_metadata(
+    path: String,
+    title: String,
+    artist: String,
+    album: String,
+    genre: String,
+    track: Option<u32>,
+    track_total: Option<u32>,
+    disk: Option<u32>,
+    disk_total: Option<u32>,
+    year: Option<u32>,
+    album_artist: Option<String>,
+    publisher: Option<String>,
+    copyright: Option<String>,
+    isrc: Option<String>,
+) -> Result<(), String> {
+    let file_path = Path::new(&path);
+    if !file_path.exists() || !file_path.is_file() {
+        return Err("File does not exist".into());
+    }
+
+    let mut tagged_file = Probe::open(file_path)
+        .map_err(|e| e.to_string())?
+        .guess_file_type()
+        .map_err(|e| e.to_string())?
+        .read()
+        .map_err(|e| e.to_string())?;
+
+    let tag_type = tagged_file.primary_tag_type();
+    if tagged_file.primary_tag().is_none() && tagged_file.first_tag().is_none() {
+        tagged_file.insert_tag(lofty::tag::Tag::new(tag_type));
+    }
+    let tag = if tagged_file.primary_tag().is_some() {
+        tagged_file.primary_tag_mut().unwrap()
+    } else {
+        tagged_file.first_tag_mut().unwrap()
+    };
+
+    // Standard Accessors
+    tag.set_title(title);
+    tag.set_artist(artist);
+    tag.set_album(album);
+    tag.set_genre(genre);
+
+    if let Some(t) = track {
+        tag.set_track(t);
+    } else {
+        tag.remove_track();
+    }
+
+    if let Some(tt) = track_total {
+        tag.set_track_total(tt);
+    } else {
+        tag.remove_track_total();
+    }
+
+    if let Some(d) = disk {
+        tag.set_disk(d);
+    } else {
+        tag.remove_disk();
+    }
+
+    if let Some(y) = year {
+        tag.set_year(y);
+    } else {
+        tag.remove_year();
+    }
+
+    // Custom ItemKey Fields
+    if let Some(aa) = album_artist {
+        tag.insert_text(ItemKey::AlbumArtist, aa);
+    } else {
+        tag.remove_key(&ItemKey::AlbumArtist);
+    }
+
+    if let Some(dt) = disk_total {
+        tag.insert_text(ItemKey::DiscTotal, dt.to_string());
+    } else {
+        tag.remove_key(&ItemKey::DiscTotal);
+    }
+
+    if let Some(p) = publisher {
+        tag.insert_text(ItemKey::Publisher, p);
+    } else {
+        tag.remove_key(&ItemKey::Publisher);
+    }
+
+    if let Some(c) = copyright {
+        tag.insert_text(ItemKey::CopyrightMessage, c);
+    } else {
+        tag.remove_key(&ItemKey::CopyrightMessage);
+    }
+
+    if let Some(i) = isrc {
+        tag.insert_text(ItemKey::Isrc, i);
+    } else {
+        tag.remove_key(&ItemKey::Isrc);
+    }
+
+    // Save changes
+    tagged_file.save_to_path(file_path, lofty::config::WriteOptions::default()).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   #[cfg(target_os = "linux")]
@@ -510,7 +645,8 @@ pub fn run() {
       delete_playlist,
       get_history,
       save_history,
-      get_stream_port
+      get_stream_port,
+      update_metadata
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

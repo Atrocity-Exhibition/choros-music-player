@@ -11,6 +11,13 @@ export interface Song {
   track: number | null;
   disk: number | null;
   duration: number;
+  albumArtist: string | null;
+  trackTotal: number | null;
+  diskTotal: number | null;
+  year: number | null;
+  publisher: string | null;
+  copyright: string | null;
+  isrc: string | null;
 }
 
 interface PlayerState {
@@ -76,6 +83,7 @@ interface PlayerState {
   loadHistory: () => Promise<void>;
   recordSongPlayed: (song: Song) => Promise<void>;
   loadStreamPort: () => Promise<void>;
+  updateSongMetadata: (songPath: string, metadata: Omit<Song, 'path' | 'duration'>) => Promise<void>;
 }
 
 // Initial state from localStorage
@@ -445,6 +453,66 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       set({ streamPort: port });
     } catch (e) {
       console.error("Failed to load stream port:", e);
+    }
+  },
+
+  updateSongMetadata: async (songPath, metadata) => {
+    try {
+      await invoke("update_metadata", {
+        path: songPath,
+        title: metadata.title,
+        artist: metadata.artist,
+        album: metadata.album,
+        genre: metadata.genre,
+        track: metadata.track,
+        trackTotal: metadata.trackTotal,
+        disk: metadata.disk,
+        diskTotal: metadata.diskTotal,
+        year: metadata.year,
+        albumArtist: metadata.albumArtist,
+        publisher: metadata.publisher,
+        copyright: metadata.copyright,
+        isrc: metadata.isrc,
+      });
+
+      const { library, queue, currentSong } = get();
+
+      const updateProperties = (song: Song): Song => {
+        if (song.path === songPath) {
+          return {
+            ...song,
+            title: metadata.title,
+            artist: metadata.artist,
+            album: metadata.album,
+            genre: metadata.genre,
+            track: metadata.track,
+            trackTotal: metadata.trackTotal,
+            disk: metadata.disk,
+            diskTotal: metadata.diskTotal,
+            year: metadata.year,
+            albumArtist: metadata.albumArtist,
+            publisher: metadata.publisher,
+            copyright: metadata.copyright,
+            isrc: metadata.isrc,
+          };
+        }
+        return song;
+      };
+
+      const updatedLibrary = library.map(updateProperties);
+      set({ library: updatedLibrary });
+      localStorage.setItem("choros_library", JSON.stringify(updatedLibrary));
+
+      if (currentSong && currentSong.path === songPath) {
+        set({ currentSong: updateProperties(currentSong) });
+      }
+
+      const updatedQueue = queue.map(updateProperties);
+      set({ queue: updatedQueue });
+
+    } catch (e) {
+      console.error("Failed to update song metadata:", e);
+      throw e;
     }
   },
 }));
