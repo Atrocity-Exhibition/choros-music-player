@@ -285,6 +285,19 @@ export default function App() {
           song={playlistSong}
           onClose={() => { setPlaylistSheetOpen(false); setPlaylistSong(null); }}
         />
+
+        {/* Global library scanning overlay */}
+        {isScanning && (
+          <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md z-45 flex flex-col items-center justify-center gap-4 animate-fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800/60 flex items-center justify-center shadow-2xl">
+              <RefreshCw className="w-6 h-6 text-zinc-400 animate-spin" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-sm font-bold text-white tracking-wide">Scanning Library</h3>
+              <p className="text-[11px] text-zinc-500 mt-1">Reading audio files and extracting metadata...</p>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Right — Player panel */}
