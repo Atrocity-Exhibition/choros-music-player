@@ -20,24 +20,28 @@ export interface Song {
   isrc: string | null;
 }
 
-interface PlayerState {
-  // Library & Navigation
+export type ActiveTab =
+  | "library" | "albums" | "artists" | "albumArtist"
+  | "playlists" | "favourites" | "folders" | "settings" | "queue";
+
+export interface PlayerState {
+  // Library
   library: Song[];
   currentFolder: string | null;
-  activeTab: "library" | "queue" | "settings" | "artists" | "albums" | "genres" | "playlists" | "history";
+  activeTab: ActiveTab;
   searchQuery: string;
 
-  // Queue State
+  // Queue
   queue: Song[];
   currentIndex: number | null;
   currentSong: Song | null;
   currentCover: string | null;
   isLoadingCover: boolean;
 
-  // Playback Control States
+  // Playback
   isPlaying: boolean;
   volume: number;
-  previousVolume: number; // For unmuting
+  previousVolume: number;
   isMuted: boolean;
   progress: number;
   duration: number;
@@ -45,474 +49,327 @@ interface PlayerState {
   isRepeat: "none" | "all" | "one";
   playbackError: string | null;
 
-  // Playlist & History State
+  // Lyrics
+  lyrics: string | null;
+  isLoadingLyrics: boolean;
+
+  // Playlists / History / Favourites
   playlists: Record<string, Song[]>;
   history: Song[];
+  favourites: Song[];
+
+  // Stream server
   streamPort: number | null;
 
-  // Actions
+  // ── Actions ──
   selectAndScanFolder: () => Promise<void>;
   scanFolder: (path: string) => Promise<void>;
   clearLibrary: () => void;
-  setSearchQuery: (query: string) => void;
-  setActiveTab: (tab: "library" | "queue" | "settings" | "artists" | "albums" | "genres" | "playlists" | "history") => void;
+  setSearchQuery: (q: string) => void;
+  setActiveTab: (tab: ActiveTab) => void;
 
-  // Playback actions
   playSong: (song: Song) => Promise<void>;
   playQueue: (songs: Song[], startIndex: number) => Promise<void>;
+  playNext: (song: Song) => void;
   addToQueue: (song: Song) => void;
   removeFromQueue: (index: number) => void;
   clearQueue: () => void;
   togglePlay: () => void;
-  setVolume: (volume: number) => void;
+  setVolume: (v: number) => void;
   toggleMute: () => void;
-  setProgress: (progress: number) => void;
-  setDuration: (duration: number) => void;
+  setProgress: (p: number) => void;
+  setDuration: (d: number) => void;
   nextSong: () => void;
   prevSong: () => void;
   toggleShuffle: () => void;
   toggleRepeat: () => void;
-  setPlaybackError: (error: string | null) => void;
+  setPlaybackError: (e: string | null) => void;
 
-  // Playlist & History Actions
   loadPlaylists: () => Promise<void>;
   createPlaylist: (name: string) => Promise<void>;
   deletePlaylist: (name: string) => Promise<void>;
-  addSongToPlaylist: (playlistName: string, song: Song) => Promise<void>;
-  removeSongFromPlaylist: (playlistName: string, songPath: string) => Promise<void>;
+  addSongToPlaylist: (playlist: string, song: Song) => Promise<void>;
+
   loadHistory: () => Promise<void>;
   recordSongPlayed: (song: Song) => Promise<void>;
+
+  loadFavourites: () => Promise<void>;
+  toggleFavourite: (song: Song) => Promise<void>;
+  isFavourite: (path: string) => boolean;
+
+  loadLyrics: (path: string) => Promise<void>;
   loadStreamPort: () => Promise<void>;
-  updateSongMetadata: (songPath: string, metadata: Omit<Song, 'path' | 'duration'>) => Promise<void>;
+  updateSongMetadata: (path: string, meta: Omit<Song, "path" | "duration">) => Promise<void>;
 }
 
-// Initial state from localStorage
-const savedLibrary = localStorage.getItem("choros_library");
-const savedFolder = localStorage.getItem("choros_folder");
+// ── Persistence helpers ───────────────────────────────────────
+function loadLS<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch { return fallback; }
+}
 
-const initialLibrary: Song[] = savedLibrary ? JSON.parse(savedLibrary) : [];
-const initialFolder: string | null = savedFolder || null;
+const initialLibrary  = loadLS<Song[]>("choros_library", []);
+const initialFolder   = localStorage.getItem("choros_folder") ?? null;
+const initialShuffle  = loadLS<boolean>("choros_shuffle", false);
+const initialRepeat   = loadLS<"none" | "all" | "one">("choros_repeat", "none");
+const initialVolume   = loadLS<number>("choros_volume", 0.8);
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
-  // Library & Navigation
   library: initialLibrary,
   currentFolder: initialFolder,
   activeTab: "library",
   searchQuery: "",
-
-  // Queue State
   queue: [],
   currentIndex: null,
   currentSong: null,
   currentCover: null,
   isLoadingCover: false,
-
-  // Playback Control States
   isPlaying: false,
-  volume: 0.8,
-  previousVolume: 0.8,
+  volume: initialVolume,
+  previousVolume: initialVolume,
   isMuted: false,
   progress: 0,
   duration: 0,
-  isShuffle: false,
-  isRepeat: "none",
+  isShuffle: initialShuffle,
+  isRepeat: initialRepeat,
   playbackError: null,
-
-  // Playlist & History State
+  lyrics: null,
+  isLoadingLyrics: false,
   playlists: {},
   history: [],
+  favourites: [],
   streamPort: null,
 
-  // Actions
   selectAndScanFolder: async () => {
     try {
       const selected: string | null = await invoke("select_folder");
-      if (selected) {
-        await get().scanFolder(selected);
-      }
-    } catch (e) {
-      console.error("Failed to select or scan folder:", e);
-    }
+      if (selected) await get().scanFolder(selected);
+    } catch (e) { console.error(e); }
   },
 
-  scanFolder: async (path) => {
-    try {
-      const songs: Song[] = await invoke("scan_folder", { folderPath: path });
-      set({ library: songs, currentFolder: path });
-      localStorage.setItem("choros_library", JSON.stringify(songs));
-      localStorage.setItem("choros_folder", path);
-    } catch (e) {
-      console.error("Failed to scan folder:", e);
-      throw e;
-    }
+  scanFolder: async path => {
+    const songs: Song[] = await invoke("scan_folder", { folderPath: path });
+    set({ library: songs, currentFolder: path });
+    localStorage.setItem("choros_library", JSON.stringify(songs));
+    localStorage.setItem("choros_folder", path);
   },
 
   clearLibrary: () => {
-    set({ library: [], currentFolder: null, queue: [], currentIndex: null, currentSong: null, currentCover: null, playbackError: null });
+    audio.pause(); audio.src = "";
+    set({ library: [], currentFolder: null, queue: [], currentIndex: null,
+      currentSong: null, currentCover: null, isPlaying: false, progress: 0, duration: 0 });
     localStorage.removeItem("choros_library");
     localStorage.removeItem("choros_folder");
-    audio.pause();
-    audio.src = "";
-    set({ isPlaying: false, progress: 0, duration: 0 });
   },
 
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  setActiveTab: (tab) => set({ activeTab: tab }),
+  setSearchQuery: q => set({ searchQuery: q }),
+  setActiveTab: tab => set({ activeTab: tab }),
 
-  // Playback actions
-  playSong: async (song) => {
-    try {
-      set({ playbackError: null });
-      
-      const { streamPort } = get();
-      const assetUrl = streamPort 
-        ? `http://127.0.0.1:${streamPort}/stream?path=${encodeURIComponent(song.path)}` 
-        : convertFileSrc(song.path);
-        
-      audio.src = assetUrl;
+  playSong: async song => {
+    set({ playbackError: null, lyrics: null });
+    const { streamPort } = get();
+    const src = streamPort
+      ? `http://127.0.0.1:${streamPort}/stream?path=${encodeURIComponent(song.path)}`
+      : convertFileSrc(song.path);
 
-      set({
-        currentSong: song,
-        isPlaying: true,
-        isLoadingCover: true,
-        currentCover: null,
-      });
+    audio.src = src;
+    set({ currentSong: song, isPlaying: true, isLoadingCover: true, currentCover: null, isLoadingLyrics: true });
 
-      await audio.play();
-
-      // Fetch cover art in the background
-      const coverUrl: string | null = await invoke("get_cover_art", { songPath: song.path });
-      if (get().currentSong?.path === song.path) {
-        set({ currentCover: coverUrl, isLoadingCover: false });
-      }
-    } catch (e) {
-      console.error("Error starting song playback:", e);
-      set({ 
-        isPlaying: false, 
-        playbackError: e instanceof Error ? e.message : "Failed to load audio source" 
-      });
-      if (get().currentSong?.path === song.path) {
-        set({ isLoadingCover: false });
-      }
+    try { await audio.play(); } catch (e) {
+      set({ isPlaying: false, isLoadingCover: false, isLoadingLyrics: false });
+      throw e;
     }
+
+    // Load cover
+    invoke<string | null>("get_cover_art", { songPath: song.path })
+      .then(cover => { if (get().currentSong?.path === song.path) set({ currentCover: cover, isLoadingCover: false }); })
+      .catch(() => { if (get().currentSong?.path === song.path) set({ isLoadingCover: false }); });
+
+    // Load lyrics
+    get().loadLyrics(song.path);
   },
 
   playQueue: async (songs, startIndex) => {
     set({ queue: songs, currentIndex: startIndex });
-    if (songs.length > 0 && startIndex >= 0 && startIndex < songs.length) {
-      await get().playSong(songs[startIndex]);
-    }
+    if (songs[startIndex]) await get().playSong(songs[startIndex]);
   },
 
-  addToQueue: (song) => {
-    const { queue } = get();
-    // Avoid duplicates if desired, or just append
-    set({ queue: [...queue, song] });
-  },
-
-  removeFromQueue: (index) => {
+  playNext: song => {
     const { queue, currentIndex } = get();
-    const newQueue = queue.filter((_, i) => i !== index);
-    
-    let newIndex = currentIndex;
+    const insertAt = currentIndex !== null ? currentIndex + 1 : queue.length;
+    const newQueue = [...queue];
+    newQueue.splice(insertAt, 0, song);
+    set({ queue: newQueue });
+  },
+
+  addToQueue: song => set(s => ({ queue: [...s.queue, song] })),
+
+  removeFromQueue: index => {
+    const { queue, currentIndex } = get();
+    const newQ = queue.filter((_, i) => i !== index);
+    let newIdx = currentIndex;
     if (currentIndex !== null) {
       if (currentIndex === index) {
-        // Current playing song was removed
-        newIndex = newQueue.length > 0 ? Math.min(currentIndex, newQueue.length - 1) : null;
-        set({ queue: newQueue, currentIndex: newIndex });
-        if (newIndex !== null) {
-          get().playSong(newQueue[newIndex]);
-        } else {
-          audio.pause();
-          audio.src = "";
-          set({ currentSong: null, isPlaying: false, progress: 0, duration: 0, currentCover: null });
-        }
+        newIdx = newQ.length > 0 ? Math.min(currentIndex, newQ.length - 1) : null;
+        set({ queue: newQ, currentIndex: newIdx });
+        if (newIdx !== null) get().playSong(newQ[newIdx]);
+        else { audio.pause(); audio.src = ""; set({ currentSong: null, isPlaying: false, progress: 0, duration: 0, currentCover: null }); }
         return;
-      } else if (currentIndex > index) {
-        newIndex = currentIndex - 1;
-      }
+      } else if (currentIndex > index) newIdx = currentIndex - 1;
     }
-    set({ queue: newQueue, currentIndex: newIndex });
+    set({ queue: newQ, currentIndex: newIdx });
   },
 
   clearQueue: () => {
-    set({ queue: [], currentIndex: null, currentSong: null, currentCover: null, isPlaying: false });
-    audio.pause();
-    audio.src = "";
+    audio.pause(); audio.src = "";
+    set({ queue: [], currentIndex: null, currentSong: null, currentCover: null, isPlaying: false, progress: 0, duration: 0 });
   },
 
   togglePlay: () => {
     if (!get().currentSong) {
-      // If nothing is playing, play first song from library if available
-      const { library } = get();
-      if (library.length > 0) {
-        get().playQueue(library, 0);
-      }
+      const lib = get().library;
+      if (lib.length > 0) get().playQueue(lib, 0);
       return;
     }
-
-    if (get().isPlaying) {
-      audio.pause();
-      set({ isPlaying: false });
-    } else {
-      audio.play().catch(err => console.error("Playback failed", err));
-      set({ isPlaying: true });
-    }
+    if (get().isPlaying) { audio.pause(); set({ isPlaying: false }); }
+    else { audio.play().catch(console.error); set({ isPlaying: true }); }
   },
 
-  setVolume: (volume) => {
-    audio.volume = volume;
-    set({ volume, isMuted: volume === 0 });
+  setVolume: v => {
+    audio.volume = v;
+    set({ volume: v, isMuted: v === 0 });
+    localStorage.setItem("choros_volume", JSON.stringify(v));
   },
 
   toggleMute: () => {
     const { isMuted, volume, previousVolume } = get();
-    if (isMuted) {
-      const restoreVol = previousVolume > 0 ? previousVolume : 0.8;
-      audio.volume = restoreVol;
-      set({ isMuted: false, volume: restoreVol });
-    } else {
-      set({ isMuted: true, previousVolume: volume, volume: 0 });
-      audio.volume = 0;
-    }
+    if (isMuted) { const v = previousVolume > 0 ? previousVolume : 0.8; audio.volume = v; set({ isMuted: false, volume: v }); }
+    else { audio.volume = 0; set({ isMuted: true, previousVolume: volume, volume: 0 }); }
   },
 
-  setProgress: (progress) => {
-    if (!isNaN(progress)) {
-      audio.currentTime = progress;
-      set({ progress });
-    }
-  },
-
-  setDuration: (duration) => {
-    if (!isNaN(duration)) {
-      set({ duration });
-    }
-  },
+  setProgress: p => { if (!isNaN(p)) { audio.currentTime = p; set({ progress: p }); } },
+  setDuration: d => { if (!isNaN(d)) set({ duration: d }); },
 
   nextSong: () => {
     const { queue, currentIndex, isShuffle, isRepeat } = get();
-    if (queue.length === 0 || currentIndex === null) return;
-
-    let nextIndex: number;
-
-    if (isShuffle) {
-      nextIndex = Math.floor(Math.random() * queue.length);
-    } else {
-      nextIndex = currentIndex + 1;
-      if (nextIndex >= queue.length) {
-        if (isRepeat === "all") {
-          nextIndex = 0;
-        } else {
-          // Stop playback at end of queue
-          audio.pause();
-          set({ isPlaying: false, progress: 0 });
-          return;
-        }
-      }
+    if (!queue.length || currentIndex === null) return;
+    let next = isShuffle ? Math.floor(Math.random() * queue.length) : currentIndex + 1;
+    if (next >= queue.length) {
+      if (isRepeat === "all") next = 0;
+      else { audio.pause(); set({ isPlaying: false, progress: 0 }); return; }
     }
-
-    set({ currentIndex: nextIndex });
-    get().playSong(queue[nextIndex]);
+    set({ currentIndex: next });
+    get().playSong(queue[next]);
   },
 
   prevSong: () => {
     const { queue, currentIndex, isShuffle, progress } = get();
-    if (queue.length === 0 || currentIndex === null) return;
-
-    if (progress > 3) {
-      audio.currentTime = 0;
-      set({ progress: 0 });
-      return;
-    }
-
-    let prevIndex: number;
-
-    if (isShuffle) {
-      prevIndex = Math.floor(Math.random() * queue.length);
-    } else {
-      prevIndex = currentIndex - 1;
-      if (prevIndex < 0) {
-        prevIndex = queue.length - 1;
-      }
-    }
-
-    set({ currentIndex: prevIndex });
-    get().playSong(queue[prevIndex]);
+    if (!queue.length || currentIndex === null) return;
+    if (progress > 3) { audio.currentTime = 0; set({ progress: 0 }); return; }
+    let prev = isShuffle ? Math.floor(Math.random() * queue.length) : currentIndex - 1;
+    if (prev < 0) prev = queue.length - 1;
+    set({ currentIndex: prev });
+    get().playSong(queue[prev]);
   },
 
-  toggleShuffle: () => set((state) => ({ isShuffle: !state.isShuffle })),
+  toggleShuffle: () => {
+    const v = !get().isShuffle; set({ isShuffle: v });
+    localStorage.setItem("choros_shuffle", JSON.stringify(v));
+  },
 
   toggleRepeat: () => {
-    const { isRepeat } = get();
-    let nextRepeat: "none" | "all" | "one" = "none";
-    if (isRepeat === "none") nextRepeat = "all";
-    else if (isRepeat === "all") nextRepeat = "one";
-    set({ isRepeat: nextRepeat });
+    const cur = get().isRepeat;
+    const next = cur === "none" ? "all" : cur === "all" ? "one" : "none";
+    set({ isRepeat: next });
+    localStorage.setItem("choros_repeat", JSON.stringify(next));
   },
 
-  setPlaybackError: (error) => set({ playbackError: error }),
+  setPlaybackError: e => set({ playbackError: e }),
 
   loadPlaylists: async () => {
     try {
-      const playlistsList: { name: string; songs: Song[] }[] = await invoke("get_playlists");
-      const playlistsMap: Record<string, Song[]> = {};
-      for (const p of playlistsList) {
-        playlistsMap[p.name] = p.songs;
-      }
-      set({ playlists: playlistsMap });
-    } catch (e) {
-      console.error("Failed to load playlists:", e);
-    }
+      const list: { name: string; songs: Song[] }[] = await invoke("get_playlists");
+      const map: Record<string, Song[]> = {};
+      list.forEach(p => { map[p.name] = p.songs; });
+      set({ playlists: map });
+    } catch (e) { console.error(e); }
   },
 
-  createPlaylist: async (name) => {
+  createPlaylist: async name => {
     const { playlists } = get();
     if (playlists[name]) return;
-    try {
-      await invoke("save_playlist", { name, songs: [] });
-      set({ playlists: { ...playlists, [name]: [] } });
-    } catch (e) {
-      console.error("Failed to create playlist:", e);
-    }
+    await invoke("save_playlist", { name, songs: [] });
+    set({ playlists: { ...playlists, [name]: [] } });
   },
 
-  deletePlaylist: async (name) => {
+  deletePlaylist: async name => {
     const { playlists } = get();
-    try {
-      await invoke("delete_playlist", { name });
-      const newPlaylists = { ...playlists };
-      delete newPlaylists[name];
-      set({ playlists: newPlaylists });
-    } catch (e) {
-      console.error("Failed to delete playlist:", e);
-    }
+    await invoke("delete_playlist", { name });
+    const np = { ...playlists }; delete np[name]; set({ playlists: np });
   },
 
   addSongToPlaylist: async (playlistName, song) => {
     const { playlists } = get();
-    const currentPlaylistSongs = playlists[playlistName] || [];
-    if (currentPlaylistSongs.some((s) => s.path === song.path)) {
-      return;
-    }
-    const updatedSongs = [...currentPlaylistSongs, song];
-    try {
-      await invoke("save_playlist", { name: playlistName, songs: updatedSongs });
-      set({
-        playlists: {
-          ...playlists,
-          [playlistName]: updatedSongs,
-        },
-      });
-    } catch (e) {
-      console.error("Failed to add song to playlist:", e);
-    }
-  },
-
-  removeSongFromPlaylist: async (playlistName, songPath) => {
-    const { playlists } = get();
-    const currentPlaylistSongs = playlists[playlistName] || [];
-    const updatedSongs = currentPlaylistSongs.filter((s) => s.path !== songPath);
-    try {
-      await invoke("save_playlist", { name: playlistName, songs: updatedSongs });
-      set({
-        playlists: {
-          ...playlists,
-          [playlistName]: updatedSongs,
-        },
-      });
-    } catch (e) {
-      console.error("Failed to remove song from playlist:", e);
-    }
+    const current = playlists[playlistName] ?? [];
+    if (current.some(s => s.path === song.path)) return;
+    const updated = [...current, song];
+    await invoke("save_playlist", { name: playlistName, songs: updated });
+    set({ playlists: { ...playlists, [playlistName]: updated } });
   },
 
   loadHistory: async () => {
-    try {
-      const historySongs: Song[] = await invoke("get_history");
-      set({ history: historySongs });
-    } catch (e) {
-      console.error("Failed to load history:", e);
-    }
+    try { const h: Song[] = await invoke("get_history"); set({ history: h }); }
+    catch (e) { console.error(e); }
   },
 
-  recordSongPlayed: async (song) => {
+  recordSongPlayed: async song => {
     const { history } = get();
-    const filtered = history.filter((s) => s.path !== song.path);
-    const updatedHistory = [song, ...filtered].slice(0, 500);
+    const updated = [song, ...history.filter(s => s.path !== song.path)].slice(0, 500);
+    try { await invoke("save_history", { history: updated }); set({ history: updated }); }
+    catch (e) { console.error(e); }
+  },
+
+  loadFavourites: async () => {
+    try { const f: Song[] = await invoke("get_favourites"); set({ favourites: f }); }
+    catch (e) { console.error(e); }
+  },
+
+  toggleFavourite: async song => {
+    const { favourites } = get();
+    const exists = favourites.some(s => s.path === song.path);
+    const updated = exists ? favourites.filter(s => s.path !== song.path) : [song, ...favourites];
+    set({ favourites: updated });
+    try { await invoke("save_favourites", { songs: updated }); }
+    catch (e) { console.error(e); set({ favourites }); }
+  },
+
+  isFavourite: path => get().favourites.some(s => s.path === path),
+
+  loadLyrics: async path => {
+    set({ isLoadingLyrics: true, lyrics: null });
     try {
-      await invoke("save_history", { history: updatedHistory });
-      set({ history: updatedHistory });
-    } catch (e) {
-      console.error("Failed to record play history:", e);
+      const lyr: string | null = await invoke("get_lyrics", { songPath: path });
+      if (get().currentSong?.path === path) set({ lyrics: lyr, isLoadingLyrics: false });
+    } catch {
+      if (get().currentSong?.path === path) set({ lyrics: null, isLoadingLyrics: false });
     }
   },
 
   loadStreamPort: async () => {
-    try {
-      const port: number = await invoke("get_stream_port");
-      set({ streamPort: port });
-    } catch (e) {
-      console.error("Failed to load stream port:", e);
-    }
+    try { const port: number = await invoke("get_stream_port"); set({ streamPort: port }); }
+    catch (e) { console.error(e); }
   },
 
   updateSongMetadata: async (songPath, metadata) => {
-    try {
-      await invoke("update_metadata", {
-        path: songPath,
-        title: metadata.title,
-        artist: metadata.artist,
-        album: metadata.album,
-        genre: metadata.genre,
-        track: metadata.track,
-        trackTotal: metadata.trackTotal,
-        disk: metadata.disk,
-        diskTotal: metadata.diskTotal,
-        year: metadata.year,
-        albumArtist: metadata.albumArtist,
-        publisher: metadata.publisher,
-        copyright: metadata.copyright,
-        isrc: metadata.isrc,
-      });
-
-      const { library, queue, currentSong } = get();
-
-      const updateProperties = (song: Song): Song => {
-        if (song.path === songPath) {
-          return {
-            ...song,
-            title: metadata.title,
-            artist: metadata.artist,
-            album: metadata.album,
-            genre: metadata.genre,
-            track: metadata.track,
-            trackTotal: metadata.trackTotal,
-            disk: metadata.disk,
-            diskTotal: metadata.diskTotal,
-            year: metadata.year,
-            albumArtist: metadata.albumArtist,
-            publisher: metadata.publisher,
-            copyright: metadata.copyright,
-            isrc: metadata.isrc,
-          };
-        }
-        return song;
-      };
-
-      const updatedLibrary = library.map(updateProperties);
-      set({ library: updatedLibrary });
-      localStorage.setItem("choros_library", JSON.stringify(updatedLibrary));
-
-      if (currentSong && currentSong.path === songPath) {
-        set({ currentSong: updateProperties(currentSong) });
-      }
-
-      const updatedQueue = queue.map(updateProperties);
-      set({ queue: updatedQueue });
-
-    } catch (e) {
-      console.error("Failed to update song metadata:", e);
-      throw e;
-    }
+    await invoke("update_metadata", { path: songPath, ...metadata });
+    const patch = (s: Song): Song => s.path === songPath ? { ...s, ...metadata } : s;
+    const updatedLib = get().library.map(patch);
+    set({ library: updatedLib });
+    localStorage.setItem("choros_library", JSON.stringify(updatedLib));
+    const { currentSong, queue } = get();
+    if (currentSong?.path === songPath) set({ currentSong: patch(currentSong) });
+    set({ queue: queue.map(patch) });
   },
 }));
