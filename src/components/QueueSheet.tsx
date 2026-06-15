@@ -16,7 +16,11 @@ function formatTime(secs: number) {
 }
 
 export function QueueSheet({ isOpen, onClose }: QueueSheetProps) {
-  const { queue, currentIndex, isPlaying, clearQueue, removeFromQueue } = usePlayerStore();
+  const queue = usePlayerStore(s => s.queue);
+  const currentIndex = usePlayerStore(s => s.currentIndex);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const clearQueue = usePlayerStore(s => s.clearQueue);
+  const removeFromQueue = usePlayerStore(s => s.removeFromQueue);
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title={`Queue · ${queue.length} tracks`} height="65vh">

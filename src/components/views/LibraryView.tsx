@@ -10,7 +10,12 @@ interface Props {
 }
 
 export function LibraryView({ onContextMenu, onAddToPlaylist, formatTime }: Props) {
-  const { library, searchQuery, setSearchQuery, currentSong, isPlaying, playQueue } = usePlayerStore();
+  const library = usePlayerStore(s => s.library);
+  const searchQuery = usePlayerStore(s => s.searchQuery);
+  const setSearchQuery = usePlayerStore(s => s.setSearchQuery);
+  const currentSong = usePlayerStore(s => s.currentSong);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const playQueue = usePlayerStore(s => s.playQueue);
 
   const q = searchQuery.toLowerCase();
   const filtered = q

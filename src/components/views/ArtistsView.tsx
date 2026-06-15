@@ -22,7 +22,8 @@ function sortSongs(songs: Song[]) {
 }
 
 export function ArtistsView({ onContextMenu, onAddToPlaylist, formatTime }: Props) {
-  const { library, streamPort } = usePlayerStore();
+  const library = usePlayerStore(s => s.library);
+  const streamPort = usePlayerStore(s => s.streamPort);
   const [selected, setSelected] = useState<string | null>(null);
 
   const artistsMap = useMemo(() => {

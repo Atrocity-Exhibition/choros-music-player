@@ -35,7 +35,13 @@ export function HeroDetail({
   onContextMenu,
   streamPort,
 }: HeroDetailProps) {
-  const { currentSong, isPlaying, playQueue, addToQueue, playNext, toggleFavourite, isFavourite } = usePlayerStore();
+  const currentSong = usePlayerStore(s => s.currentSong);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const playQueue = usePlayerStore(s => s.playQueue);
+  const addToQueue = usePlayerStore(s => s.addToQueue);
+  const playNext = usePlayerStore(s => s.playNext);
+  const toggleFavourite = usePlayerStore(s => s.toggleFavourite);
+  const favourites = usePlayerStore(s => s.favourites);
 
   const coverUrl = streamPort && coverPath
     ? `http://127.0.0.1:${streamPort}/cover?path=${encodeURIComponent(coverPath)}`
@@ -110,7 +116,7 @@ export function HeroDetail({
         <div className="flex flex-col gap-0.5">
           {songs.map((song, i) => {
             const isCurrent = currentSong?.path === song.path;
-            const fav = isFavourite(song.path);
+            const fav = favourites.some(f => f.path === song.path);
             const trackNum = song.track ?? i + 1;
 
             return (

@@ -138,7 +138,11 @@ function FolderItem({
 }
 
 export function FoldersView({ onContextMenu, onAddToPlaylist, formatTime }: Props) {
-  const { library, currentFolder, currentSong, isPlaying, playQueue } = usePlayerStore();
+  const library = usePlayerStore(s => s.library);
+  const currentFolder = usePlayerStore(s => s.currentFolder);
+  const currentSong = usePlayerStore(s => s.currentSong);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const playQueue = usePlayerStore(s => s.playQueue);
 
   const tree = useMemo(() => {
     if (!currentFolder || library.length === 0) return null;

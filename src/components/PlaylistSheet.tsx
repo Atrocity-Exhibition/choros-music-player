@@ -11,7 +11,9 @@ interface PlaylistSheetProps {
 }
 
 export function PlaylistSheet({ isOpen, song, onClose }: PlaylistSheetProps) {
-  const { playlists, createPlaylist, addSongToPlaylist } = usePlayerStore();
+  const playlists = usePlayerStore(s => s.playlists);
+  const createPlaylist = usePlayerStore(s => s.createPlaylist);
+  const addSongToPlaylist = usePlayerStore(s => s.addSongToPlaylist);
   const [newName, setNewName] = useState("");
 
   if (!song) return null;

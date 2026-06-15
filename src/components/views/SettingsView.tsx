@@ -18,7 +18,8 @@ const KEYBINDS: [string, string][] = [
 ];
 
 export function SettingsView({ isScanning, onScan }: Props) {
-  const { currentFolder, clearLibrary } = usePlayerStore();
+  const currentFolder = usePlayerStore(s => s.currentFolder);
+  const clearLibrary = usePlayerStore(s => s.clearLibrary);
 
   return (
     <div className="flex-1 overflow-y-auto animate-fade-in">

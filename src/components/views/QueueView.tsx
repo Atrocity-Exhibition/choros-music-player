@@ -10,7 +10,11 @@ interface Props {
 }
 
 export function QueueView({ onContextMenu, onAddToPlaylist, formatTime }: Props) {
-  const { queue, currentIndex, isPlaying, clearQueue, playQueue } = usePlayerStore();
+  const queue = usePlayerStore(s => s.queue);
+  const currentIndex = usePlayerStore(s => s.currentIndex);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const clearQueue = usePlayerStore(s => s.clearQueue);
+  const playQueue = usePlayerStore(s => s.playQueue);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-fade-in">

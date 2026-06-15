@@ -10,7 +10,10 @@ interface Props {
 }
 
 export function FavouritesView({ onContextMenu, onAddToPlaylist, formatTime }: Props) {
-  const { favourites, currentSong, isPlaying, playQueue } = usePlayerStore();
+  const favourites = usePlayerStore(s => s.favourites);
+  const currentSong = usePlayerStore(s => s.currentSong);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const playQueue = usePlayerStore(s => s.playQueue);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden gap-4 animate-fade-in">

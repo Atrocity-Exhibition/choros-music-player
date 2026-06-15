@@ -32,8 +32,10 @@ export function SongRow({
   rightCol,
   showTrackNum = false,
 }: SongRowProps) {
-  const { addToQueue, playNext, toggleFavourite, isFavourite } = usePlayerStore();
-  const fav = isFavourite(song.path);
+  const addToQueue = usePlayerStore(s => s.addToQueue);
+  const playNext = usePlayerStore(s => s.playNext);
+  const toggleFavourite = usePlayerStore(s => s.toggleFavourite);
+  const fav = usePlayerStore(s => s.favourites.some(f => f.path === song.path));
 
   const displayIndex = showTrackNum ? (song.track ?? index + 1) : index + 1;
 

@@ -12,7 +12,10 @@ interface Props {
 }
 
 export function PlaylistsView({ onContextMenu, onAddToPlaylist, formatTime }: Props) {
-  const { playlists, streamPort, createPlaylist, deletePlaylist } = usePlayerStore();
+  const playlists = usePlayerStore(s => s.playlists);
+  const streamPort = usePlayerStore(s => s.streamPort);
+  const createPlaylist = usePlayerStore(s => s.createPlaylist);
+  const deletePlaylist = usePlayerStore(s => s.deletePlaylist);
   const [selected, setSelected] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
 
