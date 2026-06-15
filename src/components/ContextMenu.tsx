@@ -23,7 +23,7 @@ export function ContextMenu({ x, y, song: _song, onPlay, onAddToQueue, onEditMet
       style={{ top: y, left: x }}
       onClick={e => e.stopPropagation()}
     >
-      <div className="bg-zinc-900/95 border border-zinc-800/70 rounded-xl shadow-2xl p-1 backdrop-blur-md min-w-[176px]">
+      <div className="bg-zinc-900 border border-zinc-800/70 rounded-xl shadow-2xl p-1 min-w-[176px]">
         {items.map(({ icon: Icon, label, action, fill }) => (
           <button
             key={label}

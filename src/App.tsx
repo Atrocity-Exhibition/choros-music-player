@@ -33,20 +33,42 @@ function formatTime(secs: number): string {
 }
 
 export default function App() {
-  const store = usePlayerStore();
-  const {
-    library, currentFolder, activeTab,
-    currentSong, currentCover, isLoadingCover,
-    isPlaying, volume, isMuted, progress, duration,
-    isShuffle, isRepeat, playbackError, lyrics, isLoadingLyrics,
-    setActiveTab, setPlaybackError,
-    selectAndScanFolder, scanFolder,
-    playSong, addToQueue, playNext, togglePlay,
-    setVolume, toggleMute, setProgress,
-    nextSong, prevSong, toggleShuffle, toggleRepeat,
-    loadPlaylists, loadHistory, loadFavourites, loadStreamPort,
-    toggleFavourite, isFavourite,
-  } = store;
+  const library = usePlayerStore(s => s.library);
+  const currentFolder = usePlayerStore(s => s.currentFolder);
+  const activeTab = usePlayerStore(s => s.activeTab);
+  const currentSong = usePlayerStore(s => s.currentSong);
+  const currentCover = usePlayerStore(s => s.currentCover);
+  const isLoadingCover = usePlayerStore(s => s.isLoadingCover);
+  const isPlaying = usePlayerStore(s => s.isPlaying);
+  const volume = usePlayerStore(s => s.volume);
+  const isMuted = usePlayerStore(s => s.isMuted);
+  const isShuffle = usePlayerStore(s => s.isShuffle);
+  const isRepeat = usePlayerStore(s => s.isRepeat);
+  const playbackError = usePlayerStore(s => s.playbackError);
+  const lyrics = usePlayerStore(s => s.lyrics);
+  const isLoadingLyrics = usePlayerStore(s => s.isLoadingLyrics);
+
+  const setActiveTab = usePlayerStore(s => s.setActiveTab);
+  const setPlaybackError = usePlayerStore(s => s.setPlaybackError);
+  const selectAndScanFolder = usePlayerStore(s => s.selectAndScanFolder);
+  const scanFolder = usePlayerStore(s => s.scanFolder);
+  const playSong = usePlayerStore(s => s.playSong);
+  const addToQueue = usePlayerStore(s => s.addToQueue);
+  const playNext = usePlayerStore(s => s.playNext);
+  const togglePlay = usePlayerStore(s => s.togglePlay);
+  const setVolume = usePlayerStore(s => s.setVolume);
+  const toggleMute = usePlayerStore(s => s.toggleMute);
+  const setProgress = usePlayerStore(s => s.setProgress);
+  const nextSong = usePlayerStore(s => s.nextSong);
+  const prevSong = usePlayerStore(s => s.prevSong);
+  const toggleShuffle = usePlayerStore(s => s.toggleShuffle);
+  const toggleRepeat = usePlayerStore(s => s.toggleRepeat);
+  const loadPlaylists = usePlayerStore(s => s.loadPlaylists);
+  const loadHistory = usePlayerStore(s => s.loadHistory);
+  const loadFavourites = usePlayerStore(s => s.loadFavourites);
+  const loadStreamPort = usePlayerStore(s => s.loadStreamPort);
+  const toggleFavourite = usePlayerStore(s => s.toggleFavourite);
+  const isFavourite = usePlayerStore(s => s.isFavourite);
 
   // ── UI state ──
   const [isScanning, setIsScanning]         = useState(false);
@@ -106,11 +128,15 @@ export default function App() {
   useEffect(() => {
     if (!currentSong) { loggedRef.current = null; return; }
     if (loggedRef.current !== currentSong.path) loggedRef.current = null;
-    if (!loggedRef.current && progress >= Math.min(30, duration - 1) && duration > 0) {
-      loggedRef.current = currentSong.path;
-      store.recordSongPlayed(currentSong);
-    }
-  }, [progress, duration, currentSong]); // eslint-disable-line react-hooks/exhaustive-deps
+    const checkHistory = () => {
+      if (!loggedRef.current && audio.currentTime >= Math.min(30, audio.duration - 1) && audio.duration > 0) {
+        loggedRef.current = currentSong.path;
+        usePlayerStore.getState().recordSongPlayed(currentSong);
+      }
+    };
+    audio.addEventListener("timeupdate", checkHistory);
+    return () => audio.removeEventListener("timeupdate", checkHistory);
+  }, [currentSong]);
 
   // ── Global keyboard shortcuts ──
   useEffect(() => {
@@ -206,9 +232,6 @@ export default function App() {
   if (library.length === 0) {
     return (
       <div className="h-screen w-screen bg-zinc-950 text-zinc-100 flex items-center justify-center overflow-hidden select-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/[0.01] rounded-full blur-3xl animate-pulse-slow pointer-events-none" />
-        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-zinc-500/[0.008] rounded-full blur-3xl animate-pulse-slow pointer-events-none" style={{ animationDelay: "4s" }} />
-
         <div className="flex flex-col items-center text-center max-w-sm gap-6 z-10">
           <div className="w-20 h-20 rounded-3xl bg-zinc-900 border border-zinc-800/60 flex items-center justify-center shadow-2xl">
             <Disc className="w-9 h-9 text-zinc-500 animate-pulse" />
@@ -235,9 +258,6 @@ export default function App() {
   // ─── MAIN 3-COLUMN LAYOUT ────────────────────────────────
   return (
     <div className="h-screen w-screen bg-zinc-950 text-zinc-100 flex overflow-hidden select-none">
-      {/* Decorative blobs */}
-      <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] bg-white/[0.006] rounded-full blur-3xl animate-pulse-slow pointer-events-none -z-0" />
-
       {/* Left — Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -288,7 +308,7 @@ export default function App() {
 
         {/* Global library scanning overlay */}
         {isScanning && (
-          <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md z-45 flex flex-col items-center justify-center gap-4 animate-fade-in">
+          <div className="absolute inset-0 bg-zinc-950/95 z-45 flex flex-col items-center justify-center gap-4 animate-fade-in">
             <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800/60 flex items-center justify-center shadow-2xl">
               <RefreshCw className="w-6 h-6 text-zinc-400 animate-spin" />
             </div>
@@ -308,8 +328,6 @@ export default function App() {
         isPlaying={isPlaying}
         volume={volume}
         isMuted={isMuted}
-        progress={progress}
-        duration={duration}
         isShuffle={isShuffle}
         isRepeat={isRepeat}
         lyrics={lyrics}

@@ -75,7 +75,7 @@ export function MetadataEditor({ song, onClose }: MetadataEditorProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 animate-fade-in">
       <div className="bg-zinc-900 border border-zinc-800/70 rounded-2xl w-full max-w-2xl shadow-2xl animate-slide-up flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="flex items-start justify-between p-6 pb-4 flex-shrink-0 border-b border-zinc-800/60">

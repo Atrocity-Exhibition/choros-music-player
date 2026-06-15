@@ -54,7 +54,7 @@ export function Sidebar({
   };
 
   return (
-    <aside className="w-52 flex-shrink-0 flex flex-col bg-zinc-950/70 border-r border-zinc-800/40 backdrop-blur-xl py-3">
+    <aside className="w-52 flex-shrink-0 flex flex-col bg-zinc-950 border-r border-zinc-800/40 py-3">
       {/* Nav items */}
       <nav className="flex flex-col gap-0.5 px-3 flex-1">
         {NAV.map(btn)}

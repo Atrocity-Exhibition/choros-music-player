@@ -29,11 +29,11 @@ export function BottomSheet({ isOpen, onClose, title, children, height = "60vh" 
       onClick={e => { if (e.target === overlayRef.current) onClose(); }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-fade-in" />
+      <div className="absolute inset-0 bg-black/60 animate-fade-in" />
 
       {/* Sheet */}
       <div
-        className="relative bg-zinc-900/98 border-t border-zinc-800/60 rounded-t-2xl shadow-2xl animate-sheet-up flex flex-col overflow-hidden"
+        className="relative bg-zinc-900 border-t border-zinc-800/60 rounded-t-2xl shadow-2xl animate-sheet-up flex flex-col overflow-hidden"
         style={{ height }}
         onClick={e => e.stopPropagation()}
       >

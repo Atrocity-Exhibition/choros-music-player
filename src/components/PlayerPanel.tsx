@@ -6,6 +6,7 @@ import {
   Maximize2, Minimize2, Disc,
 } from "lucide-react";
 import type { Song } from "../store/playerStore";
+import { usePlayerStore } from "../store/playerStore";
 import { LyricsView } from "./LyricsView";
 
 interface PlayerPanelProps {
@@ -15,8 +16,6 @@ interface PlayerPanelProps {
   isPlaying: boolean;
   volume: number;
   isMuted: boolean;
-  progress: number;
-  duration: number;
   isShuffle: boolean;
   isRepeat: "none" | "all" | "one";
   lyrics: string | null;
@@ -43,7 +42,7 @@ interface PlayerPanelProps {
 
 export function PlayerPanel({
   currentSong, currentCover, isLoadingCover,
-  isPlaying, volume, isMuted, progress, duration,
+  isPlaying, volume, isMuted,
   isShuffle, isRepeat, lyrics, isLoadingLyrics,
   isFavourite,
   onTogglePlay, onPrev, onNext,
@@ -52,6 +51,8 @@ export function PlayerPanel({
   formatTime, isExpanded, onToggleExpand, isFullscreen, onToggleFullscreen,
 }: PlayerPanelProps) {
   const [showLyrics, setShowLyrics] = useState(false);
+  const progress = usePlayerStore(s => s.progress);
+  const duration = usePlayerStore(s => s.duration);
 
   // Reset lyrics view when song changes
   const handleSongClick = useCallback(() => {
@@ -63,7 +64,7 @@ export function PlayerPanel({
 
   const panelClass = isFullscreen
     ? "fixed inset-0 z-[60] flex flex-col bg-zinc-950"
-    : `flex flex-col border-l border-zinc-800/40 bg-zinc-950/70 backdrop-blur-xl ${
+    : `flex flex-col border-l border-zinc-800/40 bg-zinc-950 ${
         isExpanded ? "w-[400px]" : "w-72"
       } flex-shrink-0`;
 
